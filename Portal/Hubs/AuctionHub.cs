@@ -38,9 +38,6 @@ public class AuctionHub : Hub
     public async Task Nominate(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, [FromServices] Application.Services.IAuctionCommands commands)
         => await commands.NominateAsync(sessionId, nominatorTeamId, serieAPlayerId, Context.ConnectionAborted);
 
-    public async Task MarkReady(Guid sessionId, Guid teamId, [FromServices] Application.Services.IAuctionCommands commands)
-        => await commands.MarkReadyAsync(sessionId, teamId, Context.ConnectionAborted);
-
     public async Task PlaceBid(Guid sessionId, Guid teamId, int amount, [FromServices] Application.Services.IAuctionCommands commands)
         => await commands.PlaceBidAsync(sessionId, teamId, amount, Context.ConnectionAborted);
 }

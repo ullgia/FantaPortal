@@ -177,7 +177,33 @@ public class League : AggregateRoot
         var nextTurn = ActiveAuction.FinalizeBidding(_teams.ToDictionary(t => t.Id));
         
         // Evento per UI e stop timer
-        RaiseDomainEvent(new BiddingRoundFinalized(Id, winningBid.TeamId, player.Id, winningBid.Amount, nextTurn));
+        RaiseDomainEvent(new PlayerAssigned(Id, winningBid.TeamId, player.Id, winningBid.Amount, nextTurn));
+    }
+
+    /// <summary>
+    /// Conferma che un team è pronto per il bidding
+    /// </summary>
+    public bool ConfirmTeamReady(Guid teamId)
+    {
+        if (ActiveAuction?.Status != AuctionStatus.Running)
+            throw new DomainException("No active auction");
+
+        // Verifica che il team appartenga a questa league
+        if (!_teams.Any(t => t.Id == teamId))
+            throw new DomainException("Team not in this league");
+
+        return ActiveAuction.ConfirmTeamReady(teamId);
+    }
+
+    /// <summary>
+    /// Avvia il bidding dopo che tutti i team sono pronti
+    /// </summary>
+    public BiddingInfo? StartBiddingAfterReady()
+    {
+        if (ActiveAuction?.Status != AuctionStatus.Running)
+            throw new DomainException("No active auction");
+
+        return ActiveAuction.StartBiddingAfterReady();
     }
 
     /// <summary>

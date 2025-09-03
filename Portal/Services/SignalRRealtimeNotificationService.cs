@@ -1,4 +1,5 @@
 using Application.Services;
+using Domain.ValueObjects;
 using Microsoft.AspNetCore.SignalR;
 using Portal.Hubs;
 
@@ -43,6 +44,12 @@ public class SignalRRealtimeNotificationService : IRealtimeNotificationService
 
     public Task BiddingReadyCompleted(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, Domain.Enums.RoleType role, IReadOnlyList<Guid> eligibleOtherTeamIds)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingReadyCompleted", new { sessionId, nominatorTeamId, serieAPlayerId, role, eligibleOtherTeamIds });
+
+    public Task BiddingPhaseStarted(Guid sessionId, BiddingInfo biddingInfo, int timerDurationSeconds)
+        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingPhaseStarted", new { sessionId, biddingInfo, timerDurationSeconds });
+
+    public Task BiddingTimerUpdate(Guid sessionId, int remainingSeconds)
+        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingTimerUpdate", new { sessionId, remainingSeconds });
 
     public Task PlayerAssigned(Guid sessionId, int serieAPlayerId, Guid teamId, int amount)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("PlayerAssigned", new { sessionId, serieAPlayerId, teamId, amount });

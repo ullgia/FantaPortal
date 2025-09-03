@@ -15,6 +15,7 @@ namespace Portal.Data
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<AuctionSession> AuctionSessions => Set<AuctionSession>();
         public DbSet<AuctionSessionTurnOrder> AuctionSessionTurnOrders => Set<AuctionSessionTurnOrder>();
+        public DbSet<BiddingReadyState> BiddingReadyStates => Set<BiddingReadyState>();
         public DbSet<AuctionTurn> AuctionTurns => Set<AuctionTurn>();
         public DbSet<Bid> Bids => Set<Bid>();
     public DbSet<SerieAPlayer> SerieAPlayers => Set<SerieAPlayer>();

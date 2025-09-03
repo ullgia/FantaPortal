@@ -2,11 +2,12 @@ namespace Domain.Entities;
 
 using Domain.Common;
 using Domain.Enums;
+using Domain.Events;
 using Domain.Exceptions;
 using Domain.Services;
 using Domain.ValueObjects;
 
-public class AuctionSession : BaseEntity
+public class AuctionSession : AggregateRoot
 {
     public Guid LeagueId { get; private set; }
     public AuctionStatus Status { get; private set; } = AuctionStatus.Preparation;
@@ -23,6 +24,11 @@ public class AuctionSession : BaseEntity
     
     // Stato bidding corrente
     private BiddingState _currentBidding = BiddingState.Empty;
+    
+    // Stato ready-check corrente
+    private readonly List<BiddingReadyState> _readyStates = new();
+    public IReadOnlyList<BiddingReadyState> ReadyStates => _readyStates.AsReadOnly();
+    public BiddingReadyState? CurrentReadyState => _readyStates.FirstOrDefault(rs => !rs.IsCompleted);
     
     // Proprietà per persistenza
     public bool IsBiddingActive => _currentBidding.IsActive;
@@ -60,8 +66,91 @@ public class AuctionSession : BaseEntity
     // Temporary method for backward compatibility with tests
     internal void MarkReady(Guid teamId)
     {
-        // For now, this method exists only for test compatibility
-        // In the new architecture, ready logic should be in League
+        var currentReady = CurrentReadyState;
+        if (currentReady != null && currentReady.MarkTeamReady(teamId))
+        {
+            // Verifica se tutti sono pronti
+            if (currentReady.AllTeamsReady)
+            {
+                currentReady.Complete();
+                RaiseDomainEvent(new BiddingReadyCompleted(
+                    Id, 
+                    currentReady.NominatorTeamId, 
+                    currentReady.SerieAPlayerId, 
+                    currentReady.Role, 
+                    currentReady.EligibleTeamIds));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Inizia una nuova fase di ready-check per la nomina
+    /// </summary>
+    internal BiddingReadyState StartReadyCheck(Guid nominatorTeamId, int serieAPlayerId, RoleType role, IReadOnlyList<Guid> eligibleTeamIds)
+    {
+        // Completa eventuali ready-check precedenti
+        var currentReady = CurrentReadyState;
+        currentReady?.Complete();
+
+        // Crea nuovo ready-check
+        var newReadyState = BiddingReadyState.Create(Id, nominatorTeamId, serieAPlayerId, role, eligibleTeamIds);
+        _readyStates.Add(newReadyState);
+
+        // Pubblica evento di inizio ready-check
+        RaiseDomainEvent(new BiddingReadyRequested(Id, nominatorTeamId, serieAPlayerId, role, eligibleTeamIds));
+
+        return newReadyState;
+    }
+
+    /// <summary>
+    /// Conferma ready di un team
+    /// </summary>
+    internal bool ConfirmTeamReady(Guid teamId)
+    {
+        var currentReady = CurrentReadyState;
+        if (currentReady?.MarkTeamReady(teamId) == true)
+        {
+            // Verifica se tutti sono pronti
+            if (currentReady.AllTeamsReady)
+            {
+                currentReady.Complete();
+                RaiseDomainEvent(new BiddingReadyCompleted(
+                    Id, 
+                    currentReady.NominatorTeamId, 
+                    currentReady.SerieAPlayerId, 
+                    currentReady.Role, 
+                    currentReady.EligibleTeamIds));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Rimuove ready di un team (se cambia idea)
+    /// </summary>
+    internal bool UnconfirmTeamReady(Guid teamId)
+    {
+        var currentReady = CurrentReadyState;
+        return currentReady?.UnmarkTeamReady(teamId) == true;
+    }
+
+    /// <summary>
+    /// Forza completamento ready-check (timeout o admin)
+    /// </summary>
+    internal void ForceCompleteReadyCheck()
+    {
+        var currentReady = CurrentReadyState;
+        if (currentReady != null)
+        {
+            currentReady.Complete();
+            RaiseDomainEvent(new BiddingReadyCompleted(
+                Id, 
+                currentReady.NominatorTeamId, 
+                currentReady.SerieAPlayerId, 
+                currentReady.Role, 
+                currentReady.EligibleTeamIds));
+        }
     }
 
     // Temporary method for backward compatibility with tests  
@@ -97,9 +186,33 @@ public class AuctionSession : BaseEntity
         }
         else
         {
-            _currentBidding = BiddingState.Start(nominatorTeamId, player.Id, BasePrice, evaluation.EligibleOthers);
-            return NominationResult.StartBidding(role, CreateBiddingInfo());
+            // Inizia il ready-check prima del bidding
+            StartReadyCheck(nominatorTeamId, player.Id, role, evaluation.EligibleOthers);
+            
+            // Il bidding inizierà dopo che tutti confermano ready
+            // Per ora restituiamo informazioni sulla fase di ready-check
+            return NominationResult.StartReadyCheck(role, evaluation.EligibleOthers, CurrentReadyState!);
         }
+    }
+
+    /// <summary>
+    /// Inizia effettivamente il bidding dopo il completamento del ready-check
+    /// </summary>
+    internal BiddingInfo StartBiddingAfterReady()
+    {
+        var readyState = CurrentReadyState;
+        if (readyState == null || !readyState.IsCompleted)
+        {
+            throw new DomainException("Ready check not completed");
+        }
+
+        _currentBidding = BiddingState.Start(
+            readyState.NominatorTeamId, 
+            readyState.SerieAPlayerId, 
+            BasePrice, 
+            readyState.EligibleTeamIds);
+            
+        return CreateBiddingInfo();
     }
 
     /// <summary>

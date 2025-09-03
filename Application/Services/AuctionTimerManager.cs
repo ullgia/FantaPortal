@@ -147,6 +147,50 @@ public sealed class AuctionTimerManager : IAuctionTimerManager, IDisposable
         return _activeTimers.ContainsKey(turnId);
     }
 
+    public async Task StartBiddingTimerAsync(Guid sessionId, int durationSeconds)
+    {
+        if (_isDisposed) return;
+
+        // Usa il sessionId come turnId per i timer del bidding
+        var timerId = sessionId;
+        
+        _logger.LogInformation("Starting bidding timer for session {SessionId} with duration {Duration}s", 
+            sessionId, durationSeconds);
+
+        await StopTimerAsync(timerId);
+
+        var timer = PersistedTimer.Create(
+            timerId,
+            sessionId, // auctionId = sessionId per bidding
+            durationSeconds,
+            warningAtSeconds: 10, // Warning a 10 secondi per bidding
+            leagueId: null,
+            serieAPlayerId: null,
+            sessionId: sessionId);
+
+        await _dataService.SaveTimerAsync(timer);
+
+        var worker = new TimerWorker(
+            timerId,
+            sessionId,
+            Guid.Empty, // Non abbiamo leagueId per bidding timer
+            10, // Warning a 10s
+            durationSeconds,
+            _serviceScopeFactory,
+            _logger,
+            OnTimerExpiredAsync);
+
+        _activeTimers[timerId] = worker;
+        await worker.StartAsync();
+
+        _logger.LogInformation("Bidding timer started for session {SessionId}", sessionId);
+    }
+
+    public async Task StopBiddingTimerAsync(Guid sessionId)
+    {
+        await StopTimerAsync(sessionId);
+    }
+
     private async Task OnTimerExpiredAsync(Guid turnId)
     {
         try

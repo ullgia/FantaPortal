@@ -10,4 +10,8 @@ public interface IAuctionTimerManager
     Task PauseAllTimersForAuctionAsync(Guid auctionId);
     Task StopAllTimersForAuctionAsync(Guid auctionId);
     bool HasActiveTimer(Guid turnId);
+    
+    // Bidding-specific timer management
+    Task StartBiddingTimerAsync(Guid sessionId, int durationSeconds);
+    Task StopBiddingTimerAsync(Guid sessionId);
 }

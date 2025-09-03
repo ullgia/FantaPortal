@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Services;
 using Domain.Entities;
+using Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Portal.Data;
 
@@ -87,6 +88,61 @@ public sealed class AuctionCommands(ApplicationDbContext db) : IAuctionCommands
         catch (Exception ex)
         {
             return new CommandResult(false, $"Error finalizing turn: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> ConfirmTeamReadyAsync(Guid sessionId, Guid teamId, CancellationToken ct = default)
+    {
+        try
+        {
+            // Troviamo la League che contiene questa sessione
+            var league = await _db.Leagues
+                .Include(l => l.ActiveAuction)
+                    .ThenInclude(s => s.ReadyStates)
+                .FirstOrDefaultAsync(l => l.ActiveAuction != null && l.ActiveAuction.Id == sessionId, ct);
+
+            if (league?.ActiveAuction == null) return false;
+
+            // Usa League per confermare ready (metodo pubblico)
+            var confirmed = league.ConfirmTeamReady(teamId);
+            
+            if (confirmed)
+            {
+                _db.Update(league);
+                await _db.SaveChangesAsync(ct);
+            }
+
+            return confirmed;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<BiddingInfo?> StartBiddingAfterReadyAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        try
+        {
+            // Troviamo la League che contiene questa sessione
+            var league = await _db.Leagues
+                .Include(l => l.ActiveAuction)
+                    .ThenInclude(s => s.ReadyStates)
+                .FirstOrDefaultAsync(l => l.ActiveAuction != null && l.ActiveAuction.Id == sessionId, ct);
+
+            if (league?.ActiveAuction == null) return null;
+
+            // Usa League per avviare bidding dopo ready (metodo pubblico)
+            var biddingInfo = league.StartBiddingAfterReady();
+            
+            _db.Update(league);
+            await _db.SaveChangesAsync(ct);
+
+            return biddingInfo;
+        }
+        catch
+        {
+            return null;
         }
     }
 }

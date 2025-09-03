@@ -30,7 +30,8 @@ public static class AuctionFlow
         var roles = new[] { RoleType.P, RoleType.D, RoleType.C, RoleType.A };
         var currentRoleIndex = Array.IndexOf(roles, currentRole);
         
-        // Prova il prossimo team nello stesso ruolo
+        // Prima prova a completare il ciclo nello stesso ruolo (logica circolare)
+        // Controlla dal prossimo team fino alla fine
         for (int teamIdx = currentIndex + 1; teamIdx < teamOrder.Count; teamIdx++)
         {
             var teamId = teamOrder[teamIdx];
@@ -40,7 +41,17 @@ public static class AuctionFlow
             }
         }
         
-        // Prova i ruoli successivi
+        // Poi controlla dall'inizio fino al team corrente (completamento circolare)
+        for (int teamIdx = 0; teamIdx <= currentIndex; teamIdx++)
+        {
+            var teamId = teamOrder[teamIdx];
+            if (teams.TryGetValue(teamId, out var team) && team.HasSlot(currentRole))
+            {
+                return (currentRole, teamIdx);
+            }
+        }
+        
+        // Solo dopo aver completato il ciclo del ruolo corrente, passa ai ruoli successivi
         for (int roleIdx = currentRoleIndex + 1; roleIdx < roles.Length; roleIdx++)
         {
             var nextRole = roles[roleIdx];
