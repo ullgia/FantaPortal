@@ -9,9 +9,20 @@ public class PlayerOwnershipConfiguration : IEntityTypeConfiguration<PlayerOwner
     public void Configure(EntityTypeBuilder<PlayerOwnership> b)
     {
         b.HasKey(o => o.Id);
-        b.HasOne(o => o.Owner).WithMany().HasForeignKey(o => o.LeaguePlayerId);
-        b.HasOne(o => o.Player).WithMany(nameof(SerieAPlayer.Ownerships)).HasForeignKey(o => o.SerieAPlayerId);
+        
+        // Basic properties
+        b.Property(o => o.TeamId).IsRequired();
+        b.Property(o => o.SerieAPlayerId).IsRequired();
         b.Property(o => o.PurchasePrice).IsRequired();
-        b.HasIndex(o => new { o.LeaguePlayerId, o.SerieAPlayerId, o.IsActive }).HasDatabaseName("IX_Ownership_UniqueActive");
+        b.Property(o => o.AcquiredAt).IsRequired();
+        b.Property(o => o.IsActive).IsRequired();
+        
+        // Foreign key relationships (owned by League aggregate)
+        b.HasOne<Team>().WithMany().HasForeignKey(o => o.TeamId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<SerieAPlayer>().WithMany().HasForeignKey(o => o.SerieAPlayerId).OnDelete(DeleteBehavior.Restrict);
+        
+        // Indexes
+        b.HasIndex(o => new { o.TeamId, o.SerieAPlayerId, o.IsActive }).HasDatabaseName("IX_Ownership_UniqueActive");
+        b.HasIndex(o => o.AcquiredAt);
     }
 }

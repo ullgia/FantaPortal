@@ -1,22 +1,23 @@
 namespace Domain.Entities;
 
 using Domain.Common;
-using Domain.Contracts;
 using Domain.Enums;
 using Domain.Exceptions;
-using Domain.Events;
+using Domain.ValueObjects;
 
-public class Team : AggregateRoot
+public class Team : BaseEntity
 {
     public Guid LeagueId { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public int Budget { get; private set; }
 
+    // Limiti ruoli
     public int MaxP { get; private set; } = 3;
-    public int MaxD { get; private set; } = 8;
+    public int MaxD { get; private set; } = 8; 
     public int MaxC { get; private set; } = 8;
     public int MaxA { get; private set; } = 6;
 
+    // Contatori attuali
     public int CountP { get; private set; }
     public int CountD { get; private set; }
     public int CountC { get; private set; }
@@ -24,43 +25,58 @@ public class Team : AggregateRoot
 
     private Team() { }
 
-    public static async Task<Team> CreateAsync(Guid leagueId, string name, int initialBudget, ITeamValidator validator, CancellationToken ct = default)
+    internal static Team CreateInternal(Guid leagueId, string name, int initialBudget)
     {
-    if (leagueId == Guid.Empty) throw new DomainException("LeagueId required");
-        if (string.IsNullOrWhiteSpace(name)) throw new DomainException("Team name required");
-        if (initialBudget < 0) throw new DomainException("Initial budget must be non-negative");
-        if (validator is null) throw new DomainException("Validator required");
-
-    var trimmed = name.Trim();
-    var normalized = trimmed.ToLowerInvariant();
-    var unique = await validator.IsTeamNameUniqueAsync(leagueId, normalized, ct);
-        if (!unique) throw new DomainException("Team name already exists in this league");
-
-    var team = new Team
-        {
-            LeagueId = leagueId,
-            Name = trimmed,
-            Budget = initialBudget
-        };
-    team.RaiseDomainEvent(new TeamCreated(team.Id, team.LeagueId, team.Name));
-    return team;
+        return new Team { LeagueId = leagueId, Name = name, Budget = initialBudget };
     }
 
-    public bool HasSlot(RoleType role) => role switch
+    #region Slot Management
+
+    public bool HasSlot(RoleType role) => GetAvailableSlots(role) > 0;
+
+    public int GetAvailableSlots(RoleType role) => role switch
     {
-        RoleType.P => CountP < MaxP,
-        RoleType.D => CountD < MaxD,
-        RoleType.C => CountC < MaxC,
-        RoleType.A => CountA < MaxA,
-        _ => false
+        RoleType.P => MaxP - CountP,
+        RoleType.D => MaxD - CountD,
+        RoleType.C => MaxC - CountC, 
+        RoleType.A => MaxA - CountA,
+        _ => 0
     };
 
-    public void Assign(RoleType role, int price)
+    public PlayerCounts GetPlayerCounts() => new(CountP, CountD, CountC, CountA);
+
+    #endregion
+
+    #region Internal Operations (solo da League)
+
+    /// <summary>
+    /// Assegna giocatore - solo League può chiamare
+    /// Responsabilità: aggiornamento atomico budget e contatori
+    /// </summary>
+    internal void AssignPlayerInternal(RoleType role, int price)
     {
-    if (price <= 0) throw new DomainException("Price must be positive");
         if (price > Budget) throw new DomainException("Insufficient budget");
-        if (!HasSlot(role)) throw new DomainException("No slot available for role");
+        if (!HasSlot(role)) throw new DomainException("No available slot");
+        
         Budget -= price;
+        IncrementRoleCount(role);
+    }
+
+    /// <summary>
+    /// Rilascia giocatore (per undo/correzioni)
+    /// </summary>
+    internal void ReleasePlayerInternal(RoleType role, int refund)
+    {
+        DecrementRoleCount(role);
+        Budget += refund;
+    }
+
+    #endregion
+
+    #region Private Helpers
+
+    private void IncrementRoleCount(RoleType role)
+    {
         switch (role)
         {
             case RoleType.P: CountP++; break;
@@ -70,32 +86,24 @@ public class Team : AggregateRoot
         }
     }
 
-    // Svincola un giocatore del ruolo indicato e applica un eventuale rimborso budget.
-    // Nota: la logica di rimborso (percentuale, zero, ecc.) è demandata al chiamante/test.
-    public void Release(RoleType role, int refund)
+    private void DecrementRoleCount(RoleType role)
     {
-        if (refund < 0) throw new DomainException("Refund must be non-negative");
         switch (role)
         {
-            case RoleType.P:
-                if (CountP <= 0) throw new DomainException("No players to release for role");
-                CountP--;
-                break;
+            case RoleType.P: 
+                if (CountP <= 0) throw new DomainException("No P players to release");
+                CountP--; break;
             case RoleType.D:
-                if (CountD <= 0) throw new DomainException("No players to release for role");
-                CountD--;
-                break;
+                if (CountD <= 0) throw new DomainException("No D players to release");
+                CountD--; break;
             case RoleType.C:
-                if (CountC <= 0) throw new DomainException("No players to release for role");
-                CountC--;
-                break;
+                if (CountC <= 0) throw new DomainException("No C players to release");
+                CountC--; break;
             case RoleType.A:
-                if (CountA <= 0) throw new DomainException("No players to release for role");
-                CountA--;
-                break;
-            default:
-                throw new DomainException("Invalid role");
+                if (CountA <= 0) throw new DomainException("No A players to release");
+                CountA--; break;
         }
-        Budget += refund;
     }
+
+    #endregion
 }

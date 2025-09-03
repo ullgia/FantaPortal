@@ -52,4 +52,11 @@ public class SignalRRealtimeNotificationService : IRealtimeNotificationService
 
     public Task RoleAdvanced(Guid sessionId, Domain.Enums.RoleType newRole)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("RoleAdvanced", new { sessionId, newRole });
+
+    // Implementations for the additional async methods
+    public Task SendTimerUpdateAsync(Guid leagueId, Guid auctionId, Guid turnId, int remainingSeconds)
+        => TimerUpdate(leagueId, auctionId, turnId, remainingSeconds);
+
+    public Task SendTimerWarningAsync(Guid leagueId, Guid auctionId, Guid turnId, int remainingSeconds)
+        => TimerWarning(leagueId, auctionId, turnId, remainingSeconds);
 }

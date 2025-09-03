@@ -10,6 +10,9 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
     {
         b.HasKey(t => t.Id);
         b.Property(t => t.Name).HasMaxLength(100);
+        b.Property(t => t.LeagueId).IsRequired();
+        
+        // Team belongs to League but is part of League aggregate
         b.HasOne<League>().WithMany().HasForeignKey(t => t.LeagueId);
         b.HasIndex(t => new { t.LeagueId, t.Name }).IsUnique();
     }

@@ -5,42 +5,38 @@ using Domain.Exceptions;
 
 public class PlayerOwnership : BaseEntity
 {
-    public Guid LeaguePlayerId { get; private set; }
+    public Guid TeamId { get; private set; }
     public int SerieAPlayerId { get; private set; }
     public int PurchasePrice { get; private set; }
     public DateTime AcquiredAt { get; private set; } = DateTime.UtcNow;
-    public Guid AuctionEventId { get; private set; }
+    public Guid AuctionSessionId { get; private set; }
     public bool IsActive { get; private set; } = true;
-
-    public virtual Team Owner { get; private set; } = default!;
-    public virtual SerieAPlayer Player { get; private set; } = default!;
-    // AuctionEvent placeholder type is Bid for now (winning bid id) or a future AuctionEvent entity
+    public string? DeactivationReason { get; private set; }
 
     private PlayerOwnership() { }
 
-    public static PlayerOwnership Create(Team owner, SerieAPlayer player, Guid auctionEventId, int price)
+    internal static PlayerOwnership CreateInternal(Guid teamId, int serieAPlayerId, int price, Guid auctionSessionId)
     {
-        if (owner is null) throw new DomainException("Owner required");
-        if (player is null) throw new DomainException("Player required");
-        if (auctionEventId == Guid.Empty) throw new DomainException("Auction event required");
+        if (teamId == Guid.Empty) throw new DomainException("TeamId required");
+        if (serieAPlayerId <= 0) throw new DomainException("SerieAPlayerId required");
         if (price < 0) throw new DomainException("Price must be non-negative");
+        if (auctionSessionId == Guid.Empty) throw new DomainException("AuctionSessionId required");
 
         return new PlayerOwnership
         {
-            LeaguePlayerId = owner.Id,
-            Owner = owner,
-            SerieAPlayerId = player.Id,
-            Player = player,
-            AuctionEventId = auctionEventId,
+            TeamId = teamId,
+            SerieAPlayerId = serieAPlayerId,
             PurchasePrice = price,
+            AuctionSessionId = auctionSessionId,
             IsActive = true,
             AcquiredAt = DateTime.UtcNow
         };
     }
 
-    public void Deactivate()
+    internal void DeactivateInternal(string reason)
     {
         if (!IsActive) return;
         IsActive = false;
+        DeactivationReason = reason;
     }
 }

@@ -10,16 +10,25 @@ public class AuctionSessionConfiguration : IEntityTypeConfiguration<AuctionSessi
     {
         // Keys and relationships
         builder.HasKey(a => a.Id);
-        builder.HasOne<League>().WithMany().HasForeignKey(a => a.LeagueId);
+        builder.Property(a => a.LeagueId).IsRequired();
 
-    // Persist current bidding state via properties to allow hydration
-    builder.Property(a => a.CurrentHighestBid).HasColumnName("CurrentHighestBid");
-    builder.Property(a => a.CurrentHighestTeamId).HasColumnName("CurrentHighestTeamId");
-    builder.Property(a => a.CurrentSerieAPlayerId).HasColumnName("CurrentSerieAPlayerId");
-    builder.Property(a => a.IsBiddingActive).HasColumnName("IsBiddingActive");
+        // Basic auction properties
+        builder.Property(a => a.Status).IsRequired();
+        builder.Property(a => a.CurrentRole).IsRequired();
+        builder.Property(a => a.BasePrice).IsRequired();
+        builder.Property(a => a.MinIncrement).IsRequired();
 
-        // Ignore transient readiness collections
-    builder.Ignore("_eligibleForCurrentNomination");
-    builder.Ignore("_readyTeamsForCurrentNomination");
+        // Persist current bidding state
+        builder.Property(a => a.IsBiddingActive).HasColumnName("IsBiddingActive");
+        builder.Property(a => a.CurrentSerieAPlayerId).HasColumnName("CurrentSerieAPlayerId");
+
+        // Configure TurnOrders relationship
+        builder.HasMany(a => a.TurnOrders)
+            .WithOne(to => to.AuctionSession)
+            .HasForeignKey(to => to.AuctionSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Ignore internal bidding state
+        builder.Ignore("_currentBidding");
     }
 }
