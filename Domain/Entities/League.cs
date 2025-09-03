@@ -235,7 +235,7 @@ public class League : AggregateRoot
         if (lastOwnership == null) throw new DomainException("No assignment to undo");
 
         var team = GetTeam(lastOwnership.TeamId);
-        var role = DetermineRoleFromPlayerId(lastOwnership.SerieAPlayerId);
+        var role = DeterminePlayerRole(lastOwnership.SerieAPlayer);
         
         team.ReleasePlayerInternal(role, lastOwnership.PurchasePrice);
         lastOwnership.DeactivateInternal("Undone by admin");
@@ -314,7 +314,7 @@ public class League : AggregateRoot
         team.AssignPlayerInternal(role, price);
         
         var ownership = PlayerOwnership.CreateInternal(
-            teamId, player.Id, price, ActiveAuction?.Id ?? Guid.Empty);
+            teamId, player, price, ActiveAuction?.Id ?? Guid.Empty);
         _playerOwnerships.Add(ownership);
     }
 
@@ -329,9 +329,14 @@ public class League : AggregateRoot
 
     private RoleType DetermineRoleFromPlayerId(int playerId)
     {
-        // Per ora implementazione semplificata - andrà migliorata con lookup SerieAPlayer
-        // Assumiamo che sia memorizzato nell'ownership o calcolabile in altro modo
-        throw new NotImplementedException("Requires SerieAPlayer lookup");
+        // Trova il PlayerOwnership che contiene il SerieAPlayer con l'ID specificato
+        var ownership = _playerOwnerships
+            .FirstOrDefault(o => o.SerieAPlayerId == playerId && o.IsActive);
+            
+        if (ownership?.SerieAPlayer == null)
+            throw new DomainException($"Player {playerId} not found in league ownerships");
+            
+        return DeterminePlayerRole(ownership.SerieAPlayer);
     }
 
     private IReadOnlyList<PlayerOwnership> GetTeamOwnerships(Guid teamId)

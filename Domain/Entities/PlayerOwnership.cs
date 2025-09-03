@@ -13,19 +13,23 @@ public class PlayerOwnership : BaseEntity
     public bool IsActive { get; private set; } = true;
     public string? DeactivationReason { get; private set; }
 
+    // Navigation property per SerieAPlayer
+    public SerieAPlayer SerieAPlayer { get; private set; } = default!;
+
     private PlayerOwnership() { }
 
-    internal static PlayerOwnership CreateInternal(Guid teamId, int serieAPlayerId, int price, Guid auctionSessionId)
+    internal static PlayerOwnership CreateInternal(Guid teamId, SerieAPlayer player, int price, Guid auctionSessionId)
     {
         if (teamId == Guid.Empty) throw new DomainException("TeamId required");
-        if (serieAPlayerId <= 0) throw new DomainException("SerieAPlayerId required");
+        if (player == null) throw new DomainException("SerieAPlayer required");
         if (price < 0) throw new DomainException("Price must be non-negative");
         if (auctionSessionId == Guid.Empty) throw new DomainException("AuctionSessionId required");
 
         return new PlayerOwnership
         {
             TeamId = teamId,
-            SerieAPlayerId = serieAPlayerId,
+            SerieAPlayerId = player.Id,
+            SerieAPlayer = player,
             PurchasePrice = price,
             AuctionSessionId = auctionSessionId,
             IsActive = true,
