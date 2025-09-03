@@ -12,11 +12,17 @@ public class InMemoryMagicLinkValidator : IMagicLinkValidator
     {
         if (_tokens.TryGetValue(token, out var grant))
         {
-            if (DateTime.UtcNow <= grant.ExpiresUtc)
-            {
-                return Task.FromResult<MagicGrant?>(grant);
-            }
+            // I magic link sono sempre validi fino a disabilitazione manuale dal master
+            // Non controlliamo più la scadenza automatica
+            return Task.FromResult<MagicGrant?>(grant);
         }
         return Task.FromResult<MagicGrant?>(null);
     }
+
+    // Metodo per disabilitare manualmente un token (chiamato dal master)
+    public static void DisableToken(string token) => _tokens.TryRemove(token, out _);
+
+    // Metodo per ottenere tutti i token attivi (per il master)
+    public static IEnumerable<(string Token, MagicGrant Grant)> GetActiveTokens() => 
+        _tokens.Select(kvp => (kvp.Key, kvp.Value));
 }

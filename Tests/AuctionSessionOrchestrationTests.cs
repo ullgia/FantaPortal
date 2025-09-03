@@ -20,6 +20,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Portal.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Domain.Entities;
+using Moq;
+using Xunit;
+
 public class AuctionSessionOrchestrationTests
 {
     private async Task<Team> MakeTeam(string name, int budget, int p)
@@ -110,7 +114,7 @@ public class AuctionSessionOrchestrationTests
     }
 
     [Fact]
-    public async Task Finalization_On_Timer_Expiry_With_No_Bids_Should_Only_Advance()
+    public async Task Finalization_On_Timer_Expiry_With_No_Additional_Bids_Should_Assign_To_Nominator()
     {
         // Arrange
         var services = new ServiceCollection();

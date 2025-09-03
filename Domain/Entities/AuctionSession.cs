@@ -121,9 +121,13 @@ public class AuctionSession : AggregateRoot
         {
             // Initialize readiness tracking
             _currentNominatorTeamId = nominatorTeamId;
-            CurrentSerieAPlayerId = player.Id;
+            _currentSerieAPlayerId = player.Id;
             _eligibleForCurrentNomination = res.EligibleOthers.ToHashSet();
             _readyTeamsForCurrentNomination.Clear();
+
+            // The nominator automatically places a bid at base price
+            _currentHighestBid = BasePrice;
+            _currentHighestTeamId = nominatorTeamId;
 
             RaiseDomainEvent(new BiddingReadyRequested(Id, nominatorTeamId, player.Id, CurrentRole, res.EligibleOthers));
         }

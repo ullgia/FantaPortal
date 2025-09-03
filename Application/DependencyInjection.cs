@@ -8,10 +8,18 @@ namespace Application
 
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddSingleton<Application.Services.IAuctionTimerManager, Application.Services.AuctionTimerManager>();
+            // Timer manager is now provided by Infrastructure layer (ImprovedAuctionTimerManager)
+            // services.AddSingleton<Application.Services.IAuctionTimerManager, Application.Services.AuctionTimerManager>();
+            
+            // Simple timer service disabled in favor of ImprovedAuctionTimerManager
+            // services.AddHostedService<Application.Services.SimpleAuctionTimerService>();
+            
+            // Domain events
             services.AddSingleton<IDomainEventPublisher, InMemoryDomainEventPublisher>();
-            services.AddHostedService<Application.Services.AuctionTimerHostedService>();
+            
+            // Realtime notifications
             services.AddSingleton<Application.Services.IRealtimeNotificationService, Application.Services.NoOpRealtimeNotificationService>();
+            
             return services;
         }
     }

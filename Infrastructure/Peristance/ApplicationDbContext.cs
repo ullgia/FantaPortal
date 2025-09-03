@@ -19,6 +19,9 @@ namespace Portal.Data
     public DbSet<SerieAPlayer> SerieAPlayers => Set<SerieAPlayer>();
     public DbSet<PlayerOwnership> PlayerOwnerships => Set<PlayerOwnership>();
     public DbSet<AuctionParticipant> AuctionParticipants => Set<AuctionParticipant>();
+    public DbSet<MagicLink> MagicLinks => Set<MagicLink>();
+    public DbSet<PersistedTimer> PersistedTimers => Set<PersistedTimer>();
+    public DbSet<OutboxEvent> OutboxEvents => Set<OutboxEvent>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

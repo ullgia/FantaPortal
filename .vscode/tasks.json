@@ -281,6 +281,54 @@
 				"FantaAsta.sln"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Generate EF Migration - Enhanced Features",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"ef",
+				"migrations",
+				"add",
+				"EnhancedTimerAndAuth",
+				"--project",
+				"Infrastructure",
+				"--startup-project",
+				"Portal"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Generate EF Migration - Enhanced Features",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"ef",
+				"migrations",
+				"add",
+				"EnhancedTimerAndAuth",
+				"--project",
+				"Infrastructure",
+				"--startup-project",
+				"Portal"
+			],
+			"group": "build"
+		},
+		{
+			"label": "ef migration create",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"ef",
+				"migrations",
+				"add",
+				"EnhancedTimerAndAuth",
+				"--project",
+				"Infrastructure",
+				"--startup-project",
+				"Portal",
+				"--no-build"
+			]
 		}
 	]
 }
