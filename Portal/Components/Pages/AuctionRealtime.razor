@@ -1,0 +1,70 @@
+@page "/auction/{auctionId:guid}"
+@using Portal.Services
+@using Portal.Components.Shared
+@using Radzen
+@inject AuctionRealtimeStore Store
+@inject NotificationService Notifications
+
+<PageTitle>Asta</PageTitle>
+
+<div class="container">
+    <div class="row g-3 align-items-stretch">
+        <div class="col-12 col-lg-4">
+            <TimerPanel Title="Stato turno"
+                        RemainingSeconds="@Store.RemainingSeconds"
+                        LastWarningSeconds="@Store.LastWarning" />
+            <RadzenCard>
+                <ChildContent>
+                    <div class="mt-2">
+                        <div class="text-muted">Auction:</div>
+                        <div class="fw-bold">@auctionId</div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-muted">Turno:</div>
+                        <div class="fw-bold">@(Store.TurnId == Guid.Empty ? "-" : Store.TurnId)</div>
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <RadzenButton Text="Join auction" Icon="person_add" Click="@JoinAuction" ButtonStyle="ButtonStyle.Primary" />
+                        <RadzenButton Text="Leave" Icon="logout" Click="@LeaveAuction" ButtonStyle="ButtonStyle.Secondary" />
+                    </div>
+                </ChildContent>
+            </RadzenCard>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <RadzenCard Style="height:100%">
+                <ChildContent>
+                    <h5 class="m-0">Prossimi step</h5>
+                    <p class="text-muted">Qui mostreremo player corrente, offerta corrente, controlli di offerta/ready e la rosa squadra con layout Radzen accattivante.</p>
+                </ChildContent>
+            </RadzenCard>
+        </div>
+    </div>
+    <RadzenNotification />
+    <RadzenTooltip />
+    <RadzenDialog />
+    <RadzenContextMenu />
+</div>
+
+@code {
+    [Parameter] public Guid auctionId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Store.Warning += OnWarning;
+        Store.StateChanged += OnStateChanged;
+        await Store.StartAsync(auctionId);
+    }
+
+    private Task JoinAuction() => Store.StartAsync(auctionId);
+    private Task LeaveAuction() => Store.LeaveAsync();
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    private void OnWarning(int remaining) => Notifications.Notify(new NotificationMessage
+    {
+        Severity = NotificationSeverity.Warning,
+        Summary = "Timer in scadenza",
+        Detail = $"Mancano {remaining}s",
+        Duration = 2000
+    });
+}

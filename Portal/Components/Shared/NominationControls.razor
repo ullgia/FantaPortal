@@ -1,0 +1,57 @@
+@using Radzen
+@using Radzen.Blazor
+@inject AuctionHubClient Hub
+@inject NotificationService Notifications
+@code {
+    [Parameter] public Guid SessionId { get; set; }
+    [Parameter] public Guid TeamId { get; set; }
+    private int? _serieAPlayerId;
+
+    private async Task NominateAsync()
+    {
+        if (_serieAPlayerId is not int pid || pid <= 0)
+        {
+            Notifications.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "ID giocatore mancante",
+                Detail = "Inserisci un ID valido del giocatore di Serie A",
+                Duration = 3000
+            });
+            return;
+        }
+
+        try
+        {
+            await Hub.NominateAsync(SessionId, TeamId, pid);
+            Notifications.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Nomina inviata",
+                Detail = $"Giocatore {pid} nominato",
+                Duration = 2000
+            });
+        }
+        catch (Exception ex)
+        {
+            Notifications.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Errore nomina",
+                Detail = ex.Message,
+                Duration = 4000
+            });
+        }
+    }
+}
+
+<RadzenCard>
+    <ChildContent>
+        <div class="text-muted">Nomina giocatore (ID Serie A)</div>
+        <div class="d-flex align-items-end gap-2 mt-1">
+            <RadzenNumeric @bind-Value="_serieAPlayerId" Min="1" Step="1" Style="width: 180px" />
+            <RadzenButton Text="Nomina" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="@NominateAsync" />
+        </div>
+        <small class="text-muted d-block mt-1">Nota: puoi nominare solo quando è il tuo turno. Il server applica tutte le regole.</small>
+    </ChildContent>
+</RadzenCard>

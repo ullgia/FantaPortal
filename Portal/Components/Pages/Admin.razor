@@ -1,0 +1,11 @@
+@page "/app/admin/{leagueId:guid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Admin</PageTitle>
+
+<h3>Admin Lega</h3>
+<p>Lega: @leagueId</p>
+
+@code {
+    [Parameter] public Guid leagueId { get; set; }
+}

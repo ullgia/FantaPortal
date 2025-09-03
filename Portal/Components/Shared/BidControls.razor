@@ -1,0 +1,30 @@
+@using Radzen
+@using Radzen.Blazor
+@inject AuctionHubClient Hub
+@code {
+    [Parameter] public Guid SessionId { get; set; }
+    [Parameter] public Guid TeamId { get; set; }
+    [Parameter] public int? CurrentAmount { get; set; }
+    private int _amount;
+    protected override void OnParametersSet()
+    {
+        if (CurrentAmount is int a && _amount < a) _amount = a;
+    }
+    private Task Place() => Hub.PlaceBidAsync(SessionId, TeamId, _amount);
+}
+
+<RadzenCard>
+    <ChildContent>
+        <div class="d-flex align-items-end gap-2">
+            <div class="flex-grow-1">
+                <div class="text-muted">La tua offerta</div>
+                <RadzenNumeric @bind-Value="_amount" Min="0" ShowUpDown="true" Style="width: 100%" />
+                @if (CurrentAmount is int cur)
+                {
+                    <small class="text-muted">Offerta corrente: @cur</small>
+                }
+            </div>
+            <RadzenButton Text="Offri" Icon="payments" ButtonStyle="ButtonStyle.Primary" Click="@Place" />
+        </div>
+    </ChildContent>
+ </RadzenCard>

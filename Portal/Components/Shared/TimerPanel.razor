@@ -1,0 +1,34 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Style="margin-bottom:10px">
+    <ChildContent>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="m-0">@Title</h5>
+            <RadzenBadge Text="@StatusText" BadgeStyle="@StatusStyle" />
+        </div>
+        <div class="mt-3">
+            <div class="text-muted">Secondi rimanenti</div>
+            <RadzenProgressBar Value="@ProgressValue" Max="@MaxSeconds" ShowValue="true" Mode="ProgressBarMode.Determinate" Style="height:22px" />
+            <div class="display-6 mt-2">@RemainingSeconds s</div>
+        </div>
+        @if (ShowWarning && LastWarningSeconds > 0)
+        {
+            <div class="mt-2">
+                <small class="text-muted">Ultimo avviso a: @LastWarningSeconds s</small>
+            </div>
+        }
+    </ChildContent>
+</RadzenCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Timer";
+    [Parameter] public int RemainingSeconds { get; set; }
+    [Parameter] public int MaxSeconds { get; set; } = 100; // fallback finché non abbiamo durata totale
+    [Parameter] public int LastWarningSeconds { get; set; }
+    [Parameter] public bool ShowWarning { get; set; } = true;
+
+    private int ProgressValue => Math.Clamp(RemainingSeconds, 0, MaxSeconds);
+    private BadgeStyle StatusStyle => RemainingSeconds <= 10 ? BadgeStyle.Danger : (RemainingSeconds <= 30 ? BadgeStyle.Warning : BadgeStyle.Info);
+    private string StatusText => RemainingSeconds <= 10 ? "Critical" : (RemainingSeconds <= 30 ? "Warning" : "Live");
+}

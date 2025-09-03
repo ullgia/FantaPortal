@@ -1,0 +1,86 @@
+@page "/app/ospite/{leagueId:guid}/{sessionId:guid}"
+@using Radzen
+@inject NotificationService Notifications
+@inject AuctionRealtimeStore Store
+@using Portal.Components.Shared
+
+<PageTitle>Ospite</PageTitle>
+
+<div class="container">
+    <h3>Dashboard Ospite (Read-only)</h3>
+    <p>Lega: @leagueId</p>
+    <p>Sessione: @sessionId</p>
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <TimerPanel Title="Timer Offerte" RemainingSeconds="@_remainingSeconds" LastWarningSeconds="@Store.LastWarning" />
+            <RadzenCard Class="mt-2">
+                <ChildContent>
+                    <div class="text-muted">Ultimo evento</div>
+                    <div class="fw-bold">@Store.LastEvent</div>
+                    @if (Store.HighestBid is not null)
+                    {
+                        <div class="mt-2">
+                            <span class="text-muted">Offerta corrente:</span>
+                            <span class="ms-1">@Store.HighestBid?.Amount crediti</span>
+                        </div>
+                    }
+                </ChildContent>
+            </RadzenCard>
+        </div>
+        <div class="col-12 col-md-6">
+            <RadzenCard>
+                <ChildContent>
+                    <div class="text-muted">Giocatore corrente</div>
+                    <div class="fw-bold">@(Store.CurrentPlayerId?.ToString() ?? "-")</div>
+                    <div class="text-muted mt-2">Ruolo</div>
+                    <div class="fw-bold">@(Store.CurrentRole ?? "-")</div>
+                </ChildContent>
+            </RadzenCard>
+        </div>
+    </div>
+    <RadzenNotification />
+    <RadzenTooltip />
+    <RadzenDialog />
+    <RadzenContextMenu />
+</div>
+
+@code {
+    [Parameter] public Guid leagueId { get; set; }
+    [Parameter] public Guid sessionId { get; set; }
+    [CascadingParameter] private HttpContext Http { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    private int _remainingSeconds;
+    private bool _timerRunning;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cookie = Http.Request.Cookies[Portal.Auth.MagicGrantCookie.CookieName];
+        var grant = Portal.Auth.MagicGrantCookie.Decode(cookie);
+        if (grant is null || grant.LeagueId != leagueId || grant.SessionId != sessionId || !grant.IsGuest)
+        {
+            NavigationManager.NavigateTo("/Error");
+            return;
+        }
+
+        Store.StateChanged += OnStateChanged;
+        Store.Warning += OnWarning;
+    // Ospite segue la sessione in sola lettura
+    await Store.StartSessionAsync(sessionId);
+    }
+
+    private void OnStateChanged()
+    {
+        _remainingSeconds = Store.RemainingSeconds;
+        _timerRunning = _remainingSeconds > 0;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnWarning(int seconds)
+        => Notifications.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Warning,
+            Summary = "Timer in scadenza",
+            Detail = $"Mancano {seconds}s",
+            Duration = 2000
+        });
+}

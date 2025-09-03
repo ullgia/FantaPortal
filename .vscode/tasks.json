@@ -1,0 +1,286 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "dotnet restore",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"restore",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet test",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--no-build",
+				"--logger",
+				"trx;LogFileName=test-results.trx"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet test",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--no-build",
+				"--logger",
+				"trx;LogFileName=test-results.trx"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "test"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet test",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"--no-build",
+				"--logger",
+				"trx;LogFileName=test-results.trx"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mscompile"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"group": "build"
+		},
+		{
+			"label": "dotnet build",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"FantaAsta.sln"
+			],
+			"group": "build"
+		}
+	]
+}
