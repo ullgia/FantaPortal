@@ -1,11 +1,33 @@
 ﻿@using Portal.Components.Account.Shared
-<Router AppAssembly="typeof(Program).Assembly">
+@using Microsoft.AspNetCore.Components.Routing
+<Router AppAssembly="typeof(Program).Assembly" OnNavigate="HandleNavigateAsync">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-            <NotAuthorized>
-                <RedirectToLogin />
-            </NotAuthorized>
-        </AuthorizeRouteView>
+        @if (IsAccountPublicRoute(routeData.PageType))
+        {
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.AccountAuthLayout)" />
+        }
+        else
+        {
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    <RedirectToLogin />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        }
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    private static bool IsAccountPublicRoute(Type pageType)
+    {
+        var ns = pageType.FullName ?? string.Empty;
+        // Qualsiasi pagina sotto Components.Account.Pages.* che non richiede autenticazione
+        return ns.Contains("Components.Account.Pages", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private Task HandleNavigateAsync(NavigationContext context)
+    {
+        return Task.CompletedTask;
+    }
+}

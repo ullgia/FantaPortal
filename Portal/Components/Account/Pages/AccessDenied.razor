@@ -1,8 +1,13 @@
 ﻿@page "/Account/AccessDenied"
+@layout Layout.AccountAuthLayout
 
-<PageTitle>Access denied</PageTitle>
+<PageTitle>Accesso negato</PageTitle>
 
-<header>
-    <h1 class="text-danger">Access denied</h1>
-    <p class="text-danger">You do not have access to this resource.</p>
-</header>
+<RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+    <RadzenIcon Icon="block" Style="font-size:3rem;color:#e53935;" />
+    <div class="auth-title" style="font-size:1.6rem;">Accesso negato</div>
+    <div class="auth-subtitle">Non hai i permessi per questa risorsa.</div>
+    <a href="/" style="color:#fff;text-decoration:none;">
+        <RadzenButton Text="Torna alla Home" ButtonStyle="ButtonStyle.Primary" Icon="home" Style="width:100%;" />
+    </a>
+</RadzenStack>

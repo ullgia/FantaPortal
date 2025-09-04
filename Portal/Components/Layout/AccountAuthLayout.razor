@@ -1,0 +1,44 @@
+@inherits LayoutComponentBase
+@using Radzen
+<RadzenComponents @rendermode="InteractiveServer" />
+
+@code {
+    [CascadingParameter] public HttpContext HttpContext { get; set; } = default!;
+    [Inject] NavigationManager Nav { get; set; } = default!;
+
+    protected override void OnParametersSet()
+    {
+        if (HttpContext.User?.Identity?.IsAuthenticated == true)
+        {
+            Nav.NavigateTo("/", true);
+        }
+    }
+}
+
+<div class="auth-wrapper">
+    <div class="auth-overlay"></div>
+    <div class="auth-container">
+        <RadzenCard Style="padding:2rem; background:rgba(255,255,255,0.95); backdrop-filter:blur(6px); box-shadow:0 20px 40px rgba(0,0,0,0.25); border-radius:18px; width:100%; max-width:440px;">
+            @Body
+        </RadzenCard>
+    </div>
+</div>
+
+<style>
+.auth-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,#667eea 0%, #4b6cb7 40%, #182848 100%);
+    overflow:auto;
+}
+.auth-overlay { position:absolute; inset:0; background:radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 60%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.05), transparent 65%); pointer-events:none; }
+.auth-container { position:relative; z-index:2; width:100%; padding:2rem 1.25rem; display:flex; flex-direction:column; align-items:center; }
+.auth-title { font-size:2rem; font-weight:600; text-align:center; margin:0 0 0.25rem; background:linear-gradient(90deg,#4b6cb7,#667eea,#a5b4fc); -webkit-background-clip:text; color:transparent; }
+.auth-subtitle { text-align:center; color:#555; margin-bottom:1.5rem; font-size:0.95rem; }
+.auth-footer-links { text-align:center; margin-top:1.25rem; display:flex; flex-direction:column; gap:0.4rem; }
+.auth-footer-links a { color:#4b6cb7; text-decoration:none; font-weight:500; }
+.auth-footer-links a:hover { text-decoration:underline; }
+</style>
