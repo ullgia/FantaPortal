@@ -14,6 +14,7 @@ namespace Infrastructure
             
             // Auction services
             services.AddScoped<Application.Services.IAuctionCommands, Infrastructure.Services.AuctionCommands>();
+            services.AddScoped<Application.Services.IAuctionQueries, Infrastructure.Services.AuctionQueries>();
             
             // Timer data service
             services.AddScoped<Application.Services.IAuctionTimerDataService, Infrastructure.Services.AuctionTimerDataService>();

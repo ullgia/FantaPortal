@@ -5,7 +5,7 @@ using Portal.Hubs;
 
 namespace Portal.Services;
 
-public class SignalRRealtimeNotificationService : IRealtimeNotificationService
+public class SignalRRealtimeNotificationService : Application.Services.IRealtimeNotificationService
 {
     private readonly IHubContext<AuctionHub> _hub;
 
@@ -39,11 +39,11 @@ public class SignalRRealtimeNotificationService : IRealtimeNotificationService
     public Task NewHighestBid(Guid sessionId, int serieAPlayerId, Guid teamId, int amount)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("NewHighestBid", new { sessionId, serieAPlayerId, teamId, amount });
 
-    public Task BiddingReadyRequested(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, Domain.Enums.RoleType role, IReadOnlyList<Guid> eligibleOtherTeamIds)
-        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingReadyRequested", new { sessionId, nominatorTeamId, serieAPlayerId, role, eligibleOtherTeamIds });
+    public Task BiddingReadyRequested(Guid sessionId, PlayerNominationEvent playerNomination, IReadOnlyList<Guid> eligibleOtherTeamIds)
+        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingReadyRequested", new { sessionId, playerNomination, eligibleOtherTeamIds });
 
-    public Task BiddingReadyCompleted(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, Domain.Enums.RoleType role, IReadOnlyList<Guid> eligibleOtherTeamIds)
-        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingReadyCompleted", new { sessionId, nominatorTeamId, serieAPlayerId, role, eligibleOtherTeamIds });
+    public Task BiddingReadyCompleted(Guid sessionId, PlayerNominationEvent playerNomination, IReadOnlyList<Guid> eligibleOtherTeamIds)
+        => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingReadyCompleted", new { sessionId, playerNomination, eligibleOtherTeamIds });
 
     public Task BiddingPhaseStarted(Guid sessionId, BiddingInfo biddingInfo, int timerDurationSeconds)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("BiddingPhaseStarted", new { sessionId, biddingInfo, timerDurationSeconds });
@@ -54,10 +54,10 @@ public class SignalRRealtimeNotificationService : IRealtimeNotificationService
     public Task PlayerAssigned(Guid sessionId, int serieAPlayerId, Guid teamId, int amount)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("PlayerAssigned", new { sessionId, serieAPlayerId, teamId, amount });
 
-    public Task TurnAdvanced(Guid sessionId, int newOrderIndex, Domain.Enums.RoleType role)
+    public Task TurnAdvanced(Guid sessionId, int newOrderIndex, Domain.Enums.PlayerType role)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("TurnAdvanced", new { sessionId, newOrderIndex, role });
 
-    public Task RoleAdvanced(Guid sessionId, Domain.Enums.RoleType newRole)
+    public Task RoleAdvanced(Guid sessionId, Domain.Enums.PlayerType newRole)
         => _hub.Clients.Group(AuctionHub.SessionGroup(sessionId)).SendAsync("RoleAdvanced", new { sessionId, newRole });
 
     // Implementations for the additional async methods

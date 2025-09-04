@@ -1,0 +1,96 @@
+@using Application.Services
+@inject IAuctionQueries AuctionQueries
+
+<RadzenCard>
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H6">Il Mio Team</RadzenText>
+        
+        @if (teamInfo != null)
+        {
+            <RadzenStack Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenText TextStyle="TextStyle.Body2">Budget rimanente:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: bold; color: #4caf50;">
+                        @teamInfo.AvailableBudget
+                    </RadzenText>
+                </RadzenStack>
+                
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenText TextStyle="TextStyle.Body2">Giocatori:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @teamInfo.PlayersCount/@maxPlayers
+                    </RadzenText>
+                </RadzenStack>
+
+                <!-- Slot per ruolo -->
+                <RadzenStack Gap="0.3rem">
+                    @foreach (var role in teamInfo.RoleSlots)
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Caption">@role.Role:</RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.3rem">
+                                <RadzenText TextStyle="TextStyle.Caption">@role.Used/@role.Max</RadzenText>
+                                <RadzenProgressBar Value="@((double)role.Used / role.Max * 100)" 
+                                                 Style="width: 40px; height: 6px;" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            </RadzenStack>
+        }
+        else
+        {
+            <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TeamId { get; set; }
+    [Parameter] public Guid LeagueId { get; set; }
+
+    private TeamSummaryDto? teamInfo;
+    private int maxPlayers = 25; // TODO: Da configurazione
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTeamInfo();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (teamInfo?.Id != TeamId)
+        {
+            await LoadTeamInfo();
+        }
+    }
+
+    private async Task LoadTeamInfo()
+    {
+        if (TeamId == Guid.Empty || LeagueId == Guid.Empty)
+            return;
+
+        isLoading = true;
+        try
+        {
+            var teams = await AuctionQueries.GetTeamsSummaryAsync(LeagueId);
+            teamInfo = teams.FirstOrDefault(t => t.Id == TeamId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore caricamento team: {ex.Message}");
+            teamInfo = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public async Task RefreshTeamInfo()
+    {
+        await LoadTeamInfo();
+        StateHasChanged();
+    }
+}

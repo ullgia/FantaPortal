@@ -11,7 +11,7 @@ namespace Tests.Domain;
 
 public class AuctionSessionTests
 {
-    private static Team CreateTeamWithSlots(Guid id, string name, RoleType role, int availableSlots)
+    private static Team CreateTeamWithSlots(Guid id, string name, PlayerType role, int availableSlots)
     {
         // Crea un team con slot disponibili specifici per il test
         var team = Team.CreateInternal(Guid.NewGuid(), name, 500);
@@ -20,16 +20,16 @@ public class AuctionSessionTests
         // Nota: questo usa reflection o metodi interni per test purposes
         switch (role)
         {
-            case RoleType.P:
+            case PlayerType.Goalkeeper:
                 team.GetType().GetProperty("CountP")?.SetValue(team, 3 - availableSlots);
                 break;
-            case RoleType.D:
+            case PlayerType.Defender:
                 team.GetType().GetProperty("CountD")?.SetValue(team, 8 - availableSlots);
                 break;
-            case RoleType.C:
+            case PlayerType.Midfielder:
                 team.GetType().GetProperty("CountC")?.SetValue(team, 8 - availableSlots);
                 break;
-            case RoleType.A:
+            case PlayerType.Forward:
                 team.GetType().GetProperty("CountA")?.SetValue(team, 6 - availableSlots);
                 break;
         }
@@ -63,8 +63,8 @@ public class AuctionSessionTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { nominatorId, CreateTeamWithSlots(nominatorId, "Nominator", RoleType.P, 1) }, // Ha slot
-            { otherTeamId, CreateTeamWithSlots(otherTeamId, "Other", RoleType.P, 0) }      // Non ha slot
+            { nominatorId, CreateTeamWithSlots(nominatorId, "Nominator", PlayerType.Goalkeeper, 1) }, // Ha slot
+            { otherTeamId, CreateTeamWithSlots(otherTeamId, "Other", PlayerType.Goalkeeper, 0) }      // Non ha slot
         };
         
         var player = CreateSerieAPlayer(1, PlayerType.Goalkeeper);
@@ -75,7 +75,7 @@ public class AuctionSessionTests
         // Assert
         Assert.True(result.IsAutoAssign);
         Assert.False(result.IsReadyCheck);
-        Assert.Equal(RoleType.P, result.Role);
+        Assert.Equal(PlayerType.Goalkeeper, result.Role);
         Assert.Equal(1, result.Price); // BasePrice
         Assert.Null(result.BiddingInfo);
         Assert.Null(result.ReadyState);
@@ -94,9 +94,9 @@ public class AuctionSessionTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { nominatorId, CreateTeamWithSlots(nominatorId, "Nominator", RoleType.D, 1) },
-            { team2Id, CreateTeamWithSlots(team2Id, "Team2", RoleType.D, 1) },
-            { team3Id, CreateTeamWithSlots(team3Id, "Team3", RoleType.D, 0) } // Non ha slot
+            { nominatorId, CreateTeamWithSlots(nominatorId, "Nominator", PlayerType.Defender, 1) },
+            { team2Id, CreateTeamWithSlots(team2Id, "Team2", PlayerType.Defender, 1) },
+            { team3Id, CreateTeamWithSlots(team3Id, "Team3", PlayerType.Defender, 0) } // Non ha slot
         };
         
         var player = CreateSerieAPlayer(200, PlayerType.Defender);
@@ -107,7 +107,7 @@ public class AuctionSessionTests
         // Assert
         Assert.False(result.IsAutoAssign);
         Assert.True(result.IsReadyCheck);
-        Assert.Equal(RoleType.D, result.Role);
+        Assert.Equal(PlayerType.Defender, result.Role);
         Assert.NotNull(result.ReadyState);
         Assert.Equal(nominatorId, result.ReadyState.NominatorTeamId);
         Assert.Equal(200, result.ReadyState.SerieAPlayerId);
@@ -126,7 +126,7 @@ public class AuctionSessionTests
         var team2Id = Guid.NewGuid();
         var eligibleTeams = new List<Guid> { team2Id };
         
-        var readyState = session.StartReadyCheck(nominatorId, 300, RoleType.C, eligibleTeams);
+        var readyState = session.StartReadyCheck(nominatorId, 300, PlayerType.Midfielder, eligibleTeams);
 
         // Act - Team2 conferma ready
         var confirmed = session.ConfirmTeamReady(team2Id);
@@ -148,7 +148,7 @@ public class AuctionSessionTests
         var team2Id = Guid.NewGuid();
         var eligibleTeams = new List<Guid> { team2Id };
         
-        var readyState = session.StartReadyCheck(nominatorId, 400, RoleType.A, eligibleTeams);
+        var readyState = session.StartReadyCheck(nominatorId, 400, PlayerType.Forward, eligibleTeams);
         session.ConfirmTeamReady(team2Id); // Completa ready-check
 
         // Act
@@ -175,7 +175,7 @@ public class AuctionSessionTests
         var bidderId = Guid.NewGuid();
         var eligibleTeams = new List<Guid> { bidderId };
         
-        session.StartReadyCheck(nominatorId, 500, RoleType.P, eligibleTeams);
+        session.StartReadyCheck(nominatorId, 500, PlayerType.Goalkeeper, eligibleTeams);
         session.ConfirmTeamReady(bidderId);
         session.StartBiddingAfterReady();
 
@@ -200,8 +200,8 @@ public class AuctionSessionTests
         
         var nominatorId = Guid.NewGuid();
         var bidderId = Guid.NewGuid();
-        
-        session.StartReadyCheck(nominatorId, 600, RoleType.C, new List<Guid> { bidderId });
+
+        session.StartReadyCheck(nominatorId, 600, PlayerType.Midfielder, new List<Guid> { bidderId });
         session.ConfirmTeamReady(bidderId);
         session.StartBiddingAfterReady();
         session.PlaceBid(bidderId, 5); // Prima offerta valida
@@ -220,8 +220,8 @@ public class AuctionSessionTests
         
         var nominatorId = Guid.NewGuid();
         var bidderId = Guid.NewGuid();
-        
-        session.StartReadyCheck(nominatorId, 700, RoleType.A, new List<Guid> { bidderId });
+
+        session.StartReadyCheck(nominatorId, 700, PlayerType.Forward, new List<Guid> { bidderId });
         session.ConfirmTeamReady(bidderId);
         session.StartBiddingAfterReady();
         session.PlaceBid(bidderId, 10);
@@ -244,13 +244,13 @@ public class AuctionSessionTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { Guid.NewGuid(), CreateTeamWithSlots(Guid.NewGuid(), "Team1", RoleType.P, 1) },
-            { Guid.NewGuid(), CreateTeamWithSlots(Guid.NewGuid(), "Team2", RoleType.P, 1) }
+            { Guid.NewGuid(), CreateTeamWithSlots(Guid.NewGuid(), "Team1", PlayerType.Goalkeeper, 1) },
+            { Guid.NewGuid(), CreateTeamWithSlots(Guid.NewGuid(), "Team2", PlayerType.Goalkeeper, 1) }
         };
         
         // Simula bidding attivo
         var nominatorId = teams.Keys.First();
-        session.StartReadyCheck(nominatorId, 800, RoleType.P, teams.Keys.Skip(1).ToList());
+        session.StartReadyCheck(nominatorId, 800, PlayerType.Goalkeeper, teams.Keys.Skip(1).ToList());
         session.ConfirmTeamReady(teams.Keys.Skip(1).First());
         session.StartBiddingAfterReady();
 

@@ -2,4 +2,4 @@ namespace Domain.Events;
 
 using Domain.Enums;
 
-public sealed record RoleAdvanced(Guid SessionId, RoleType NewRole);
+public sealed record RoleAdvanced(Guid SessionId, PlayerType NewRole);

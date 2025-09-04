@@ -1,0 +1,162 @@
+@using Application.Services
+@using Domain.Entities
+@using Domain.Enums
+@inject IAuctionCommands AuctionCommands
+@inject IAuctionQueries AuctionQueries
+
+<RadzenCard Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" class="text-white">
+    <RadzenStack Gap="1rem">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                Ready Check in corso
+            </RadzenText>
+            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"{readyTeams.Count}/{totalTeams}")" />
+        </RadzenStack>
+
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.9);">
+            @if (nominatedPlayer != null)
+            {
+                <span>Giocatore nominato: <strong>@nominatedPlayer.PlayerName</strong> (@nominatedPlayer.Team) - FVM: @nominatedPlayer.FVM</span>
+            }
+            else
+            {
+                <span>In attesa di informazioni sul giocatore nominato...</span>
+            }
+        </RadzenText>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+            @if (!isCurrentTeamReady)
+            {
+                <RadzenButton Text="Sono Pronto" 
+                            Icon="check_circle" 
+                            ButtonStyle="ButtonStyle.Success"
+                            Size="ButtonSize.Large"
+                            Disabled="@isProcessing"
+                            Click="ConfirmReady" />
+            }
+            else
+            {
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="✓ Confermato" />
+            }
+            
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.8);">
+                Attendere che tutti i team confermino la partecipazione
+            </RadzenText>
+        </RadzenStack>
+
+        <!-- Lista team pronti -->
+        <RadzenCard Style="background: rgba(255,255,255,0.1); border: none;">
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: white; margin-bottom: 0.5rem;">
+                Team pronti:
+            </RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                @foreach (var team in readyTeams)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@team" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Text="@errorMessage" />
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid AuctionId { get; set; }
+    [Parameter] public Guid CurrentTeamId { get; set; }
+    [Parameter] public EventCallback OnReadyStateChanged { get; set; }
+
+    private PlayerNominatedDto? nominatedPlayer;
+    private List<string> readyTeams = new();
+    private int totalTeams = 1;
+    private bool isCurrentTeamReady = false;
+    private bool isProcessing = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReadyState();
+    }
+
+    private async Task LoadReadyState()
+    {
+        try
+        {
+            var readyStates = await AuctionQueries.GetReadyStatesAsync(AuctionId);
+            readyTeams = readyStates
+                .Where(r => r.IsReady)
+                .Select(r => r.TeamName)
+                .ToList();
+
+            var auctionOverview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+            if (auctionOverview != null)
+            {
+                totalTeams = auctionOverview.TotalTeams;
+            }
+
+            // Check se il team corrente è già pronto
+            isCurrentTeamReady = readyStates.Any(r => r.TeamId == CurrentTeamId && r.IsReady);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Errore caricamento stato: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmReady()
+    {
+        try
+        {
+            isProcessing = true;
+            errorMessage = string.Empty;
+
+            await AuctionCommands.ConfirmTeamReadyAsync(AuctionId, CurrentTeamId);
+            
+            isCurrentTeamReady = true;
+            await OnReadyStateChanged.InvokeAsync();
+            
+            // Ricarica lo stato
+            await LoadReadyState();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    // Metodo per aggiornare dall'esterno (es. tramite SignalR)
+    public async Task UpdateReadyState()
+    {
+        await LoadReadyState();
+        StateHasChanged();
+    }
+
+    // Metodo per aggiornamenti diretti via SignalR (senza query)
+    public async Task UpdateReadyStateFromSignalR(IReadOnlyList<ReadyStateDto> readyStates)
+    {
+        readyTeams = readyStates
+            .Where(r => r.IsReady)
+            .Select(r => r.TeamName)
+            .ToList();
+
+        // Check se il team corrente è già pronto
+        isCurrentTeamReady = readyStates.Any(r => r.TeamId == CurrentTeamId && r.IsReady);
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Metodo per ricevere notifica di giocatore nominato via SignalR
+    public async Task OnPlayerNominated(PlayerNominatedDto player)
+    {
+        nominatedPlayer = player;
+        await InvokeAsync(StateHasChanged);
+    }
+}

@@ -2,9 +2,9 @@ namespace Domain.Entities;
 
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Common;
+using Domain.Enums;
 using Domain.Exceptions;
 
-public enum PlayerType { Goalkeeper, Defender, Midfielder, Forward }
 
 public class SerieAPlayer : AggregateRoot<int>
 {

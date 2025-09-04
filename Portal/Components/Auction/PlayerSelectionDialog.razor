@@ -1,0 +1,389 @@
+@using Domain.Entities
+@using Domain.Enums
+@using Application.Services
+@inject IAuctionQueries AuctionQueries
+
+
+<style>
+    .player-selection-dialog {
+        padding: 1rem;
+    }
+
+    .player-card {
+        border: 2px solid transparent !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .player-card:hover {
+        border-color: var(--rz-primary) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+    }
+    
+    .player-card.selected {
+        border-color: var(--rz-success) !important;
+        background-color: #f8fff9 !important;
+    }
+    
+    .player-image-container {
+        position: relative;
+    }
+    
+    .player-name {
+        font-size: 0.875rem;
+        max-height: 2.4em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .player-value {
+        font-weight: 600;
+    }
+
+    .gap-2 > * {
+        margin-right: 0.5rem;
+    }
+
+    .flex-wrap {
+        flex-wrap: wrap;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .justify-content-center {
+        justify-content: center;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    .fw-bold {
+        font-weight: bold;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+
+    .mb-2 {
+        margin-bottom: 0.5rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+
+    .mt-2 {
+        margin-top: 0.5rem;
+    }
+
+    .p-3 {
+        padding: 1rem;
+    }
+
+    .p-4 {
+        padding: 1.5rem;
+    }
+
+    .m-4 {
+        margin: 1.5rem;
+    }
+
+    .h-100 {
+        height: 100%;
+    }
+
+    .flex-column {
+        flex-direction: column;
+    }
+</style>
+
+
+<div class="player-selection-dialog">
+    @if (_isLoading)
+    {
+        <div class="text-center p-4">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+            <div class="mt-2">Caricamento giocatori...</div>
+        </div>
+    }
+    else
+    {
+        <div style="max-height: 600px; overflow-y: auto;">
+            <!-- Filtri e ordinamento -->
+            <RadzenCard class="mb-3" Style="background-color: #f8f9fa; padding: 1rem;">
+                <!-- Campo ricerca -->
+                <RadzenTextBox @bind-Value="_searchText" 
+                              Placeholder="Cerca per nome o squadra..." 
+                              class="w-100 mb-3"
+                              @oninput="@(async (args) => { _searchText = args.Value?.ToString() ?? ""; await FilterPlayersDebounced(); })" />
+                
+                <!-- Filtro squadra -->
+                <RadzenDropDown @bind-Value="_selectedTeamFilter" 
+                               Data="_availableTeams" 
+                               Placeholder="Filtra per squadra"
+                               AllowClear="true"
+                               class="w-100 mb-3"
+                               Change="@(async () => await FilterPlayers())" />
+
+                <!-- Ordinamento -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="me-2" style="font-size: 0.875rem; color: #6c757d;">Ordina per:</span>
+                    
+                    <RadzenSelectBar @bind-Value="_sortBy" 
+                                    TValue="SortCriteria"
+                                    Change="@(async () => await FilterPlayers())"
+                                    Size="ButtonSize.Small">
+                        <Items>
+                            <RadzenSelectBarItem Text="Nome" Value="@SortCriteria.Name" />
+                            <RadzenSelectBarItem Text="Valore" Value="@SortCriteria.Value" />
+                            <RadzenSelectBarItem Text="Squadra" Value="@SortCriteria.Team" />
+                        </Items>
+                    </RadzenSelectBar>
+                    
+                    <RadzenButton Click="ToggleSortOrder" 
+                                 Variant="Variant.Text"
+                                 ButtonType="ButtonType.Button"
+                                 Size="ButtonSize.Small"
+                                 Icon="@(_sortAscending ? "keyboard_arrow_up" : "keyboard_arrow_down")"
+                                 title="@(_sortAscending ? "Crescente" : "Decrescente")" />
+                </div>
+            </RadzenCard>
+
+            @if (!_filteredPlayers.Any())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" class="m-4">
+                    @if (string.IsNullOrEmpty(_searchText))
+                    {
+                        <text>Nessun giocatore disponibile per il ruolo @CurrentRole.</text>
+                    }
+                    else
+                    {
+                        <text>Nessun giocatore trovato con i filtri applicati.</text>
+                    }
+                </RadzenAlert>
+            }
+            else
+            {
+                <!-- Griglia giocatori responsive -->
+                <div class="row g-2">
+                    @foreach (var player in _filteredPlayers)
+                    {
+                        <div class="col-6 col-sm-4 col-md-4 col-lg-3">
+                            <RadzenCard Class="@GetPlayerCardClass(player)"
+                                       Style="cursor: pointer; height: 220px; position: relative; transition: all 0.2s ease;"
+                                       @onclick="() => SelectPlayer(player)">
+                                
+                                @if (selectedPlayer?.Id == player.Id)
+                                {
+                                    <div style="position: absolute; top: 8px; right: 8px; z-index: 10;">
+                                        <RadzenIcon Icon="check_circle" Style="color: #28a745; font-size: 1.5rem;" />
+                                    </div>
+                                }
+                                
+                                <div class="p-3 text-center d-flex flex-column justify-content-center align-items-center h-100">
+                                    <!-- Immagine giocatore -->
+                                    <div class="player-image-container mb-2">
+                                        <img src="@player.ImageUrl"
+                                             alt="@player.Name"
+                                             style="width: 80px; height: 100px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgODAgMTAwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjVGNUY1IiByeD0iOCIvPgo8Y2lyY2xlIGN4PSI0MCIgY3k9IjM1IiByPSIxNSIgZmlsbD0iIzk5OTk5OSIvPgo8cGF0aCBkPSJNMjAgNzBjMC0xMSA5LTIwIDIwLTIwczIwIDkgMjAgMjB2MjBIMjBWNzB6IiBmaWxsPSIjOTk5OTk5Ii8+CjwvcGF0aD4KPC9zdmc+'" />
+                                    </div>
+                                    
+                                    <!-- Nome giocatore -->
+                                    <div class="fw-bold player-name" style="line-height: 1.2; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem;">
+                                        @player.Name
+                                    </div>
+                                    
+                                    <!-- Squadra -->
+                                    <div class="text-muted" style="line-height: 1.2; margin-bottom: 4px; font-size: 0.75rem;">
+                                        @player.Team
+                                    </div>
+                                    
+                                    <!-- Valore -->
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" 
+                                                Text="@(player.FVM.ToString("N0"))" 
+                                                class="player-value" />
+                                </div>
+                            </RadzenCard>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public PlayerType CurrentRole { get; set; }
+    [Parameter] public Guid LeagueId { get; set; }
+    [Parameter] public EventCallback<SerieAPlayer> OnPlayerSelected { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private bool _isLoading = true;
+    private string _searchText = "";
+    private string? _selectedTeamFilter = "";
+    
+    private List<SerieAPlayer> _allPlayers = new();
+    private List<SerieAPlayer> _filteredPlayers = new();
+    private List<string> _availableTeams = new();
+    private SerieAPlayer? selectedPlayer;
+
+    private SortCriteria _sortBy = SortCriteria.Name;
+    private bool _sortAscending = true;
+
+    private Timer? _debounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailablePlayers();
+    }
+
+    private async Task LoadAvailablePlayers()
+    {
+        _isLoading = true;
+        try
+        {
+            _allPlayers = (await AuctionQueries.GetAvailablePlayersAsync(LeagueId, CurrentRole)).ToList();
+            
+            _availableTeams = new List<string> { "" }.Concat(_allPlayers.Select(p => p.Team).Distinct().OrderBy(t => t)).ToList();
+            await FilterPlayers();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore caricamento giocatori: {ex.Message}");
+            _allPlayers = new List<SerieAPlayer>();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task FilterPlayersDebounced()
+    {
+        _debounceTimer?.Dispose();
+        _debounceTimer = new Timer(async _ => {
+            await InvokeAsync(async () => {
+                await FilterPlayers();
+                StateHasChanged();
+            });
+        }, null, 300, Timeout.Infinite);
+    }
+
+    private async Task FilterPlayers()
+    {
+        await Task.Run(() => {
+            var query = _allPlayers.AsEnumerable();
+
+            // Filtro per testo
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                query = query.Where(p => 
+                    p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                    p.Team.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Filtro per squadra
+            if (!string.IsNullOrWhiteSpace(_selectedTeamFilter))
+            {
+                query = query.Where(p => p.Team == _selectedTeamFilter);
+            }
+
+            _filteredPlayers = GetSortedPlayers(query).ToList();
+        });
+        
+        StateHasChanged();
+    }
+
+    private IEnumerable<SerieAPlayer> GetSortedPlayers(IEnumerable<SerieAPlayer>? players = null)
+    {
+        var query = players ?? _filteredPlayers;
+        
+        query = _sortBy switch
+        {
+            SortCriteria.Name => _sortAscending ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
+            SortCriteria.Value => _sortAscending ? query.OrderBy(p => p.FVM) : query.OrderByDescending(p => p.FVM),
+            SortCriteria.Team => _sortAscending ? query.OrderBy(p => p.Team).ThenBy(p => p.Name) : query.OrderByDescending(p => p.Team).ThenBy(p => p.Name),
+            _ => query.OrderBy(p => p.Name)
+        };
+
+        return query;
+    }
+
+    private async Task SetSort(SortCriteria criteria)
+    {
+        if (_sortBy == criteria)
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortBy = criteria;
+            _sortAscending = true;
+        }
+        await FilterPlayers();
+    }
+
+    private async Task ToggleSortOrder()
+    {
+        _sortAscending = !_sortAscending;
+        await FilterPlayers();
+    }
+
+    private void SelectPlayer(SerieAPlayer player)
+    {
+        selectedPlayer = player;
+        StateHasChanged();
+    }
+
+    public async Task<SerieAPlayer?> Confirm()
+    {
+        if (selectedPlayer != null)
+        {
+            await OnPlayerSelected.InvokeAsync(selectedPlayer);
+            return selectedPlayer;
+        }
+        return null;
+    }
+
+    public async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    private string GetPlayerCardClass(SerieAPlayer player)
+    {
+        return selectedPlayer?.Id == player.Id ? "player-card selected" : "player-card";
+    }
+
+    private enum SortCriteria
+    {
+        Name,
+        Value,
+        Team
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+}

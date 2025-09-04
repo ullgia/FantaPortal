@@ -11,7 +11,7 @@ public class AuctionSession : AggregateRoot
 {
     public Guid LeagueId { get; private set; }
     public AuctionStatus Status { get; private set; } = AuctionStatus.Preparation;
-    public RoleType CurrentRole { get; private set; } = RoleType.P;
+    public PlayerType CurrentRole { get; private set; } = PlayerType.Goalkeeper;
     public int CurrentOrderIndex { get; private set; } = 0;
     
     public int BasePrice { get; private set; } = 1;
@@ -86,7 +86,7 @@ public class AuctionSession : AggregateRoot
     /// <summary>
     /// Inizia una nuova fase di ready-check per la nomina
     /// </summary>
-    internal BiddingReadyState StartReadyCheck(Guid nominatorTeamId, int serieAPlayerId, RoleType role, IReadOnlyList<Guid> eligibleTeamIds)
+    internal BiddingReadyState StartReadyCheck(Guid nominatorTeamId, int serieAPlayerId, PlayerType role, IReadOnlyList<Guid> eligibleTeamIds)
     {
         // Completa eventuali ready-check precedenti
         var currentReady = CurrentReadyState;
@@ -176,8 +176,8 @@ public class AuctionSession : AggregateRoot
     internal NominationResult ProcessNomination(Guid nominatorTeamId, SerieAPlayer player, IReadOnlyDictionary<Guid, Team> teams)
     {
         if (Status != AuctionStatus.Running) throw new DomainException("Auction not running");
-        
-        var role = DetermineRoleFromPlayer(player);
+
+        var role = player.PlayerType;
         var evaluation = AuctionFlow.EvaluateNomination(teams.Values, nominatorTeamId, role);
         
         if (evaluation.AutoAssign)
@@ -335,14 +335,6 @@ public class AuctionSession : AggregateRoot
 
     #region Private Helpers
 
-    private RoleType DetermineRoleFromPlayer(SerieAPlayer player) => player.PlayerType switch
-    {
-        PlayerType.Goalkeeper => RoleType.P,
-        PlayerType.Defender => RoleType.D, 
-        PlayerType.Midfielder => RoleType.C,
-        PlayerType.Forward => RoleType.A,
-        _ => throw new DomainException("Invalid player type")
-    };
 
     private int EstimateRemainingTime()
     {

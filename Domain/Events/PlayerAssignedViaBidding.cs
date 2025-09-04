@@ -6,6 +6,6 @@ public sealed record PlayerAssignedViaBidding(
     Guid SessionId,
     Guid TeamId,
     int SerieAPlayerId,
-    RoleType Role,
+    PlayerType Role,
     int Amount
 );

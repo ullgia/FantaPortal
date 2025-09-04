@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
+using Application.Events;
 
 namespace Portal.Hubs;
 
@@ -36,8 +37,27 @@ public class AuctionHub : Hub
 
     // Commands (intra-progetto): invocati dai client Blazor via SignalR
     public async Task Nominate(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, [FromServices] Application.Services.IAuctionCommands commands)
-        => await commands.NominateAsync(sessionId, nominatorTeamId, serieAPlayerId, Context.ConnectionAborted);
+        => await commands.NominatePlayerAsync(sessionId, nominatorTeamId, serieAPlayerId, Context.ConnectionAborted);
 
     public async Task PlaceBid(Guid sessionId, Guid teamId, int amount, [FromServices] Application.Services.IAuctionCommands commands)
         => await commands.PlaceBidAsync(sessionId, teamId, amount, Context.ConnectionAborted);
+
+    // Metodi per aggiornamenti ottimizzati (chiamati dal backend)
+    public async Task SendTurnOrderUpdate(Guid leagueId, IReadOnlyList<Application.Services.TurnOrderDto> turnOrder)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.TurnOrderUpdate, turnOrder);
+
+    public async Task SendReadyStatesUpdate(Guid leagueId, IReadOnlyList<Application.Services.ReadyStateDto> readyStates)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.ReadyStatesUpdate, readyStates);
+
+    public async Task SendPlayerNominated(Guid leagueId, Application.Services.PlayerNominatedDto playerNominated)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.PlayerNominated, playerNominated);
+
+    public async Task SendBidUpdate(Guid leagueId, Application.Services.BidDto bid)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.BidUpdate, bid);
+
+    public async Task SendFullStateUpdate(Guid leagueId, Application.Services.AuctionOverviewDto overview)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.FullStateUpdate, overview);
+
+    public async Task SendPhaseChanged(Guid leagueId, string newPhase)
+        => await Clients.Group(LeagueGroup(leagueId)).SendAsync(SignalREventNames.PhaseChanged, newPhase);
 }

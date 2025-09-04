@@ -10,27 +10,27 @@ namespace Tests.Domain;
 
 public class AuctionFlowTests
 {
-    private static Team CreateTeamWithSlots(Guid id, RoleType role, int availableSlots)
+    private static Team CreateTeamWithSlots(Guid id, PlayerType role, int availableSlots)
     {
         var team = Team.CreateInternal(Guid.NewGuid(), $"Team {id}", 500);
         
         // Simula l'uso di slot impostando i contatori per riflettere gli slot disponibili
         var usedSlots = role switch
         {
-            RoleType.P => 3 - availableSlots,  // Max 3 portieri
-            RoleType.D => 8 - availableSlots,  // Max 8 difensori
-            RoleType.C => 8 - availableSlots,  // Max 8 centrocampisti
-            RoleType.A => 6 - availableSlots,  // Max 6 attaccanti
+            PlayerType.Goalkeeper => 3 - availableSlots,  // Max 3 portieri
+            PlayerType.Defender => 8 - availableSlots,  // Max 8 difensori
+            PlayerType.Midfielder => 8 - availableSlots,  // Max 8 centrocampisti
+            PlayerType.Forward => 6 - availableSlots,  // Max 6 attaccanti
             _ => 0
         };
 
         // Usa reflection per impostare i contatori (solo per test)
         var property = role switch
         {
-            RoleType.P => "CountP",
-            RoleType.D => "CountD",
-            RoleType.C => "CountC",
-            RoleType.A => "CountA",
+            PlayerType.Goalkeeper => "CountP",
+            PlayerType.Defender => "CountD",
+            PlayerType.Midfielder => "CountC",
+            PlayerType.Forward => "CountA",
             _ => throw new ArgumentException("Invalid role")
         };
         
@@ -48,13 +48,13 @@ public class AuctionFlowTests
         
         var teams = new[]
         {
-            CreateTeamWithSlots(nominatorId, RoleType.P, 1), // Nominatore ha slot
-            CreateTeamWithSlots(team1Id, RoleType.P, 0),     // Team1 non ha slot
-            CreateTeamWithSlots(team2Id, RoleType.P, 0)      // Team2 non ha slot
+            CreateTeamWithSlots(nominatorId, PlayerType.Goalkeeper, 1), // Nominatore ha slot
+            CreateTeamWithSlots(team1Id, PlayerType.Goalkeeper, 0),     // Team1 non ha slot
+            CreateTeamWithSlots(team2Id, PlayerType.Goalkeeper, 0)      // Team2 non ha slot
         };
 
         // Act
-        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, RoleType.P);
+        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, PlayerType.Goalkeeper);
 
         // Assert
         Assert.True(autoAssign);
@@ -72,14 +72,14 @@ public class AuctionFlowTests
         
         var teams = new[]
         {
-            CreateTeamWithSlots(nominatorId, RoleType.D, 2), // Nominatore ha slot
-            CreateTeamWithSlots(team1Id, RoleType.D, 1),     // Team1 ha slot
-            CreateTeamWithSlots(team2Id, RoleType.D, 0),     // Team2 non ha slot
-            CreateTeamWithSlots(team3Id, RoleType.D, 3)      // Team3 ha slot
+            CreateTeamWithSlots(nominatorId, PlayerType.Defender, 2), // Nominatore ha slot
+            CreateTeamWithSlots(team1Id, PlayerType.Defender, 1),     // Team1 ha slot
+            CreateTeamWithSlots(team2Id, PlayerType.Defender, 0),     // Team2 non ha slot
+            CreateTeamWithSlots(team3Id, PlayerType.Defender, 3)      // Team3 ha slot
         };
 
         // Act
-        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, RoleType.D);
+        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, PlayerType.Defender);
 
         // Assert
         Assert.False(autoAssign);
@@ -99,12 +99,12 @@ public class AuctionFlowTests
         
         var teams = new[]
         {
-            CreateTeamWithSlots(nominatorId, RoleType.C, 1), // Solo nominatore ha slot
-            CreateTeamWithSlots(team1Id, RoleType.C, 0)      // Altri non hanno slot
+            CreateTeamWithSlots(nominatorId, PlayerType.Midfielder, 1), // Solo nominatore ha slot
+            CreateTeamWithSlots(team1Id, PlayerType.Midfielder, 0)      // Altri non hanno slot
         };
 
         // Act
-        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, RoleType.C);
+        var (autoAssign, eligibleOthers) = AuctionFlow.EvaluateNomination(teams, nominatorId, PlayerType.Midfielder);
 
         // Assert
         Assert.True(autoAssign);
@@ -122,16 +122,16 @@ public class AuctionFlowTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.P, 1) },
-            { team2Id, CreateTeamWithSlots(team2Id, RoleType.P, 0) }, // Non ha slot
-            { team3Id, CreateTeamWithSlots(team3Id, RoleType.P, 1) }
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Goalkeeper, 1) },
+            { team2Id, CreateTeamWithSlots(team2Id, PlayerType.Goalkeeper, 0) }, // Non ha slot
+            { team3Id, CreateTeamWithSlots(team3Id, PlayerType.Goalkeeper, 1) }
         };
 
         // Act - Dal team 1 (index 0), dovrebbe andare al team 3 (index 2) perché team 2 non ha slot
-        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.P, 0);
+        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Goalkeeper, 0);
 
         // Assert
-        Assert.Equal(RoleType.P, nextRole);
+        Assert.Equal(PlayerType.Goalkeeper, nextRole);
         Assert.Equal(2, nextIndex); // Team3 è il prossimo eligible
     }
 
@@ -146,16 +146,16 @@ public class AuctionFlowTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.D, 1) },
-            { team2Id, CreateTeamWithSlots(team2Id, RoleType.D, 0) }, // Non ha slot
-            { team3Id, CreateTeamWithSlots(team3Id, RoleType.D, 0) }  // Non ha slot
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Defender, 1) },
+            { team2Id, CreateTeamWithSlots(team2Id, PlayerType.Defender, 0) }, // Non ha slot
+            { team3Id, CreateTeamWithSlots(team3Id, PlayerType.Defender, 0) }  // Non ha slot
         };
 
         // Act - Dal team 3 (index 2), dovrebbe tornare al team 1 (index 0)
-        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.D, 2);
+        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Defender, 2);
 
         // Assert
-        Assert.Equal(RoleType.D, nextRole);
+        Assert.Equal(PlayerType.Defender, nextRole);
         Assert.Equal(0, nextIndex); // Torna al team1
     }
 
@@ -169,19 +169,19 @@ public class AuctionFlowTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.P, 0) }, // Non ha slot P
-            { team2Id, CreateTeamWithSlots(team2Id, RoleType.P, 0) }  // Non ha slot P
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Goalkeeper, 0) }, // Non ha slot P
+            { team2Id, CreateTeamWithSlots(team2Id, PlayerType.Goalkeeper, 0) }  // Non ha slot P
         };
         
         // Imposta slot disponibili per difensori
-        teams[team1Id] = CreateTeamWithSlots(team1Id, RoleType.D, 1);
-        teams[team2Id] = CreateTeamWithSlots(team2Id, RoleType.D, 1);
+        teams[team1Id] = CreateTeamWithSlots(team1Id, PlayerType.Defender, 1);
+        teams[team2Id] = CreateTeamWithSlots(team2Id, PlayerType.Defender, 1);
 
         // Act - Da P dovrebbe avanzare a D
-        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.P, 0);
+        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Goalkeeper, 0);
 
         // Assert
-        Assert.Equal(RoleType.D, nextRole);
+        Assert.Equal(PlayerType.Defender, nextRole);
         Assert.Equal(0, nextIndex); // Inizia dal primo team nel nuovo ruolo
     }
 
@@ -196,12 +196,12 @@ public class AuctionFlowTests
         // Tutti i team non hanno più slot per nessun ruolo
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.A, 0) }, // Nessun slot rimasto
-            { team2Id, CreateTeamWithSlots(team2Id, RoleType.A, 0) }  // Nessun slot rimasto
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Forward, 0) }, // Nessun slot rimasto
+            { team2Id, CreateTeamWithSlots(team2Id, PlayerType.Forward, 0) }  // Nessun slot rimasto
         };
 
         // Act - Da ultimo ruolo (A) senza slot disponibili
-        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.A, 0);
+        var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Forward, 0);
 
         // Assert
         Assert.Null(nextRole); // Asta completata
@@ -217,29 +217,29 @@ public class AuctionFlowTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.P, 0) } // No slots for P
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Goalkeeper, 0) } // No slots for P
         };
 
         // Test progression P -> D -> C -> A
         
         // Slot available for D
-        teams[team1Id] = CreateTeamWithSlots(team1Id, RoleType.D, 1);
-        var (role1, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.P, 0);
-        Assert.Equal(RoleType.D, role1);
+        teams[team1Id] = CreateTeamWithSlots(team1Id, PlayerType.Defender, 1);
+        var (role1, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Goalkeeper, 0);
+        Assert.Equal(PlayerType.Defender, role1);
 
         // No slot for D, slot available for C
-        teams[team1Id] = CreateTeamWithSlots(team1Id, RoleType.C, 1);
-        var (role2, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.D, 0);
-        Assert.Equal(RoleType.C, role2);
+        teams[team1Id] = CreateTeamWithSlots(team1Id, PlayerType.Midfielder, 1);
+        var (role2, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Defender, 0);
+        Assert.Equal(PlayerType.Midfielder, role2);
 
         // No slot for C, slot available for A
-        teams[team1Id] = CreateTeamWithSlots(team1Id, RoleType.A, 1);
-        var (role3, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.C, 0);
-        Assert.Equal(RoleType.A, role3);
+        teams[team1Id] = CreateTeamWithSlots(team1Id, PlayerType.Forward, 1);
+        var (role3, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Midfielder, 0);
+        Assert.Equal(PlayerType.Forward, role3);
 
         // No slot for A, should return null
-        teams[team1Id] = CreateTeamWithSlots(team1Id, RoleType.A, 0);
-        var (role4, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.A, 0);
+        teams[team1Id] = CreateTeamWithSlots(team1Id, PlayerType.Forward, 0);
+        var (role4, _) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Forward, 0);
         Assert.Null(role4);
     }
 
@@ -255,25 +255,25 @@ public class AuctionFlowTests
         
         var teams = new Dictionary<Guid, Team>
         {
-            { team1Id, CreateTeamWithSlots(team1Id, RoleType.C, 0) }, // Non ha slot
-            { team2Id, CreateTeamWithSlots(team2Id, RoleType.C, 1) }, // Ha slot
-            { team3Id, CreateTeamWithSlots(team3Id, RoleType.C, 0) }, // Non ha slot
-            { team4Id, CreateTeamWithSlots(team4Id, RoleType.C, 1) }  // Ha slot
+            { team1Id, CreateTeamWithSlots(team1Id, PlayerType.Midfielder, 0) }, // Non ha slot
+            { team2Id, CreateTeamWithSlots(team2Id, PlayerType.Midfielder, 1) }, // Ha slot
+            { team3Id, CreateTeamWithSlots(team3Id, PlayerType.Midfielder, 0) }, // Non ha slot
+            { team4Id, CreateTeamWithSlots(team4Id, PlayerType.Midfielder, 1) }  // Ha slot
         };
 
         // Act - Dal team1 (index 0), dovrebbe andare al team2 (index 1)
-        var (role1, index1) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.C, 0);
-        Assert.Equal(RoleType.C, role1);
+        var (role1, index1) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Midfielder, 0);
+        Assert.Equal(PlayerType.Midfielder, role1);
         Assert.Equal(1, index1);
 
         // Dal team2 (index 1), dovrebbe andare al team4 (index 3)
-        var (role2, index2) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.C, 1);
-        Assert.Equal(RoleType.C, role2);
+        var (role2, index2) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Midfielder, 1);
+        Assert.Equal(PlayerType.Midfielder, role2);
         Assert.Equal(3, index2);
 
         // Dal team4 (index 3), dovrebbe tornare al team2 (index 1) - circular
-        var (role3, index3) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, RoleType.C, 3);
-        Assert.Equal(RoleType.C, role3);
+        var (role3, index3) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Midfielder, 3);
+        Assert.Equal(PlayerType.Midfielder, role3);
         Assert.Equal(1, index3);
     }
 }

@@ -11,7 +11,7 @@ public static class AuctionFlow
     public static (bool AutoAssign, IReadOnlyList<Guid> EligibleOthers) EvaluateNomination(
         IEnumerable<Team> allTeams, 
         Guid nominatorId, 
-        RoleType role)
+        PlayerType role)
     {
         var eligibleTeams = allTeams.Where(t => t.Id != nominatorId && t.HasSlot(role)).ToList();
         
@@ -21,13 +21,13 @@ public static class AuctionFlow
             : (false, eligibleTeams.Select(t => t.Id).ToList());
     }
 
-    public static (RoleType? NextRole, int NextIndex) AdvanceUntilEligible(
+    public static (PlayerType? NextRole, int NextIndex) AdvanceUntilEligible(
         IReadOnlyList<Guid> teamOrder,
         IReadOnlyDictionary<Guid, Team> teams,
-        RoleType currentRole,
+        PlayerType currentRole,
         int currentIndex)
     {
-        var roles = new[] { RoleType.P, RoleType.D, RoleType.C, RoleType.A };
+        var roles = new[] { PlayerType.Goalkeeper, PlayerType.Defender, PlayerType.Midfielder, PlayerType.Forward };
         var currentRoleIndex = Array.IndexOf(roles, currentRole);
         
         // Prima prova a completare il ciclo nello stesso ruolo (logica circolare)

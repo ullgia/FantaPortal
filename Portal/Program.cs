@@ -53,6 +53,7 @@ builder.Services.AddInfrastructureServices(builder.Configuration)
 // SignalR and realtime notifications
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<Application.Services.IRealtimeNotificationService, SignalRRealtimeNotificationService>();
+builder.Services.AddScoped<Portal.Services.IRealtimeNotificationService, Portal.Services.SignalRNotificationService>();
 builder.Services.AddScoped<Portal.Services.AuctionHubClient>();
 builder.Services.AddScoped<Portal.Services.AuctionRealtimeStore>();
 builder.Services.AddRadzenComponents();

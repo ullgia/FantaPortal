@@ -14,7 +14,7 @@ public sealed class BiddingReadyState : BaseEntity<Guid>
     public Guid SessionId { get; private set; }
     public Guid NominatorTeamId { get; private set; }
     public int SerieAPlayerId { get; private set; }
-    public RoleType Role { get; private set; }
+    public PlayerType Role { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public bool IsCompleted { get; private set; }
 
@@ -56,7 +56,7 @@ public sealed class BiddingReadyState : BaseEntity<Guid>
         Guid sessionId,
         Guid nominatorTeamId,
         int serieAPlayerId,
-        RoleType role,
+        PlayerType role,
         IReadOnlyList<Guid> eligibleTeamIds)
     {
         Id = Guid.NewGuid();
@@ -76,7 +76,7 @@ public sealed class BiddingReadyState : BaseEntity<Guid>
         Guid sessionId,
         Guid nominatorTeamId,
         int serieAPlayerId,
-        RoleType role,
+        PlayerType role,
         IReadOnlyList<Guid> eligibleTeamIds)
     {
         return new BiddingReadyState(sessionId, nominatorTeamId, serieAPlayerId, role, eligibleTeamIds);

@@ -6,6 +6,6 @@ public sealed record BiddingReadyCompleted(
     Guid SessionId,
     Guid NominatorTeamId,
     int SerieAPlayerId,
-    RoleType Role,
+    PlayerType Role,
     IReadOnlyList<Guid> EligibleOtherTeamIds
 );

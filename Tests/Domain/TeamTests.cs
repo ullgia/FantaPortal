@@ -32,11 +32,11 @@ public class TeamTests
     }
 
     [Theory]
-    [InlineData(RoleType.P, true)]   // Può ancora comprare portieri (max 3)
-    [InlineData(RoleType.D, true)]   // Può ancora comprare difensori (max 8)
-    [InlineData(RoleType.C, true)]   // Può ancora comprare centrocampisti (max 8)
-    [InlineData(RoleType.A, true)]   // Può ancora comprare attaccanti (max 6)
-    public void HasSlot_WithAvailableSlots_ShouldReturnTrue(RoleType role, bool expected)
+    [InlineData(PlayerType.Goalkeeper, true)]   // Può ancora comprare portieri (max 3)
+    [InlineData(PlayerType.Defender, true)]   // Può ancora comprare difensori (max 8)
+    [InlineData(PlayerType.Midfielder, true)]   // Può ancora comprare centrocampisti (max 8)
+    [InlineData(PlayerType.Forward, true)]   // Può ancora comprare attaccanti (max 6)
+    public void HasSlot_WithAvailableSlots_ShouldReturnTrue(PlayerType role, bool expected)
     {
         // Arrange
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
@@ -55,10 +55,10 @@ public class TeamTests
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
 
         // Act & Assert
-        Assert.Equal(3, team.GetAvailableSlots(RoleType.P));
-        Assert.Equal(8, team.GetAvailableSlots(RoleType.D));
-        Assert.Equal(8, team.GetAvailableSlots(RoleType.C));
-        Assert.Equal(6, team.GetAvailableSlots(RoleType.A));
+        Assert.Equal(3, team.GetAvailableSlots(PlayerType.Goalkeeper));
+        Assert.Equal(8, team.GetAvailableSlots(PlayerType.Defender));
+        Assert.Equal(8, team.GetAvailableSlots(PlayerType.Midfielder));
+        Assert.Equal(6, team.GetAvailableSlots(PlayerType.Forward));
     }
 
     [Fact]
@@ -69,12 +69,12 @@ public class TeamTests
         var price = 50;
 
         // Act
-        team.AssignPlayerInternal(RoleType.P, price);
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, price);
 
         // Assert
         Assert.Equal(450, team.Budget); // 500 - 50
         Assert.Equal(1, team.CountP);
-        Assert.Equal(2, team.GetAvailableSlots(RoleType.P)); // 3 - 1
+        Assert.Equal(2, team.GetAvailableSlots(PlayerType.Goalkeeper)); // 3 - 1
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class TeamTests
         var price = 150; // Più del budget disponibile
 
         // Act & Assert
-        var exception = Assert.Throws<DomainException>(() => team.AssignPlayerInternal(RoleType.P, price));
+        var exception = Assert.Throws<DomainException>(() => team.AssignPlayerInternal(PlayerType.Goalkeeper, price));
         Assert.Contains("Insufficient budget", exception.Message);
     }
 
@@ -96,12 +96,12 @@ public class TeamTests
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
         
         // Riempie tutti i slot per portieri
-        team.AssignPlayerInternal(RoleType.P, 50);
-        team.AssignPlayerInternal(RoleType.P, 50);
-        team.AssignPlayerInternal(RoleType.P, 50);
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
 
         // Act & Assert
-        var exception = Assert.Throws<DomainException>(() => team.AssignPlayerInternal(RoleType.P, 50));
+        var exception = Assert.Throws<DomainException>(() => team.AssignPlayerInternal(PlayerType.Goalkeeper, 50));
         Assert.Contains("No available slot", exception.Message);
     }
 
@@ -110,19 +110,19 @@ public class TeamTests
     {
         // Arrange
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
-        team.AssignPlayerInternal(RoleType.D, 75);
-        
+        team.AssignPlayerInternal(PlayerType.Defender, 75);
+
         // Verifica stato iniziale
         Assert.Equal(425, team.Budget);
         Assert.Equal(1, team.CountD);
 
         // Act
-        team.ReleasePlayerInternal(RoleType.D, 75);
+        team.ReleasePlayerInternal(PlayerType.Defender, 75);
 
         // Assert
         Assert.Equal(500, team.Budget); // Budget ripristinato
         Assert.Equal(0, team.CountD);   // Contatore decrementato
-        Assert.Equal(8, team.GetAvailableSlots(RoleType.D)); // Slot disponibile
+        Assert.Equal(8, team.GetAvailableSlots(PlayerType.Defender)); // Slot disponibile
     }
 
     [Fact]
@@ -130,11 +130,11 @@ public class TeamTests
     {
         // Arrange
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
-        team.AssignPlayerInternal(RoleType.P, 50);
-        team.AssignPlayerInternal(RoleType.D, 30);
-        team.AssignPlayerInternal(RoleType.D, 40);
-        team.AssignPlayerInternal(RoleType.C, 60);
-        team.AssignPlayerInternal(RoleType.A, 80);
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
+        team.AssignPlayerInternal(PlayerType.Defender, 30);
+        team.AssignPlayerInternal(PlayerType.Defender, 40);
+        team.AssignPlayerInternal(PlayerType.Midfielder, 60);
+        team.AssignPlayerInternal(PlayerType.Forward, 80);
 
         // Act
         var counts = team.GetPlayerCounts();
@@ -153,10 +153,10 @@ public class TeamTests
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 1000);
 
         // Act - Sequence di operazioni
-        team.AssignPlayerInternal(RoleType.P, 100);  // Budget: 900, P: 1
-        team.AssignPlayerInternal(RoleType.D, 150);  // Budget: 750, D: 1
-        team.ReleasePlayerInternal(RoleType.P, 100); // Budget: 850, P: 0
-        team.AssignPlayerInternal(RoleType.A, 200);  // Budget: 650, A: 1
+        team.AssignPlayerInternal(PlayerType.Goalkeeper, 100);  // Budget: 900, P: 1
+        team.AssignPlayerInternal(PlayerType.Defender, 150);  // Budget: 750, D: 1
+        team.ReleasePlayerInternal(PlayerType.Goalkeeper, 100); // Budget: 850, P: 0
+        team.AssignPlayerInternal(PlayerType.Forward, 200);  // Budget: 650, A: 1
 
         // Assert
         Assert.Equal(650, team.Budget);
@@ -164,19 +164,19 @@ public class TeamTests
         Assert.Equal(1, team.CountD);
         Assert.Equal(0, team.CountC);
         Assert.Equal(1, team.CountA);
-        
-        Assert.Equal(3, team.GetAvailableSlots(RoleType.P)); // Tutti disponibili
-        Assert.Equal(7, team.GetAvailableSlots(RoleType.D)); // 8 - 1
-        Assert.Equal(8, team.GetAvailableSlots(RoleType.C)); // Tutti disponibili
-        Assert.Equal(5, team.GetAvailableSlots(RoleType.A)); // 6 - 1
+
+        Assert.Equal(3, team.GetAvailableSlots(PlayerType.Goalkeeper)); // Tutti disponibili
+        Assert.Equal(7, team.GetAvailableSlots(PlayerType.Defender)); // 8 - 1
+        Assert.Equal(8, team.GetAvailableSlots(PlayerType.Midfielder)); // Tutti disponibili
+        Assert.Equal(5, team.GetAvailableSlots(PlayerType.Forward)); // 6 - 1
     }
 
     [Theory]
-    [InlineData(RoleType.P, 3)]
-    [InlineData(RoleType.D, 8)]
-    [InlineData(RoleType.C, 8)]
-    [InlineData(RoleType.A, 6)]
-    public void FillAllSlots_ShouldReachMaxCapacity(RoleType role, int maxSlots)
+    [InlineData(PlayerType.Goalkeeper, 3)]
+    [InlineData(PlayerType.Defender, 8)]
+    [InlineData(PlayerType.Midfielder, 8)]
+    [InlineData(PlayerType.Forward, 6)]
+    public void FillAllSlots_ShouldReachMaxCapacity(PlayerType role, int maxSlots)
     {
         // Arrange
         var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 5000); // Budget alto per non limitare

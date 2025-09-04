@@ -6,11 +6,11 @@ using Domain.Enums;
 // Informazioni stato corrente
 public record TurnInfo(
     Guid CurrentTeamId,
-    RoleType CurrentRole, 
+    PlayerType CurrentRole, 
     int OrderIndex,
     AuctionStatus Status)
 {
-    public static TurnInfo Empty => new(Guid.Empty, RoleType.P, 0, AuctionStatus.Preparation);
+    public static TurnInfo Empty => new(Guid.Empty, PlayerType.Goalkeeper, 0, AuctionStatus.Preparation);
 }
 
 public record BiddingInfo(
@@ -25,18 +25,18 @@ public record BiddingInfo(
 public record NominationResult(
     bool IsAutoAssign,
     bool IsReadyCheck,
-    RoleType Role,
+    PlayerType Role,
     int Price,
     BiddingInfo? BiddingInfo,
     BiddingReadyState? ReadyState)
 {
-    public static NominationResult AutoAssign(RoleType role, int price) =>
+    public static NominationResult AutoAssign(PlayerType role, int price) =>
         new(true, false, role, price, null, null);
         
-    public static NominationResult StartBidding(RoleType role, BiddingInfo biddingInfo) =>
+    public static NominationResult StartBidding(PlayerType role, BiddingInfo biddingInfo) =>
         new(false, false, role, 0, biddingInfo, null);
         
-    public static NominationResult StartReadyCheck(RoleType role, IReadOnlyList<Guid> eligibleTeams, BiddingReadyState readyState) =>
+    public static NominationResult StartReadyCheck(PlayerType role, IReadOnlyList<Guid> eligibleTeams, BiddingReadyState readyState) =>
         new(false, true, role, 0, null, readyState);
 }
 

@@ -51,7 +51,7 @@ public class League : AggregateRoot
             ?? throw new DomainException("Team not found");
     }
 
-    public IReadOnlyList<Team> GetTeamsWithSlotForRole(RoleType role)
+    public IReadOnlyList<Team> GetTeamsWithSlotForRole(PlayerType role)
     {
         return _teams.Where(t => t.HasSlot(role)).ToList();
     }
@@ -300,7 +300,7 @@ public class League : AggregateRoot
     /// <summary>
     /// Operazione interna atomica per assegnazione giocatore
     /// </summary>
-    private void AssignPlayerInternal(Guid teamId, SerieAPlayer player, int price, RoleType role)
+    private void AssignPlayerInternal(Guid teamId, SerieAPlayer player, int price, PlayerType role)
     {
         var team = GetTeam(teamId);
         
@@ -318,16 +318,16 @@ public class League : AggregateRoot
         _playerOwnerships.Add(ownership);
     }
 
-    private RoleType DeterminePlayerRole(SerieAPlayer player) => player.PlayerType switch
+    private PlayerType DeterminePlayerRole(SerieAPlayer player) => player.PlayerType switch
     {
-        PlayerType.Goalkeeper => RoleType.P,
-        PlayerType.Defender => RoleType.D,
-        PlayerType.Midfielder => RoleType.C,
-        PlayerType.Forward => RoleType.A,
+        PlayerType.Goalkeeper => PlayerType.Goalkeeper,
+        PlayerType.Defender => PlayerType.Defender,
+        PlayerType.Midfielder => PlayerType.Midfielder,
+        PlayerType.Forward => PlayerType.Forward,
         _ => throw new DomainException("Invalid player type")
     };
 
-    private RoleType DetermineRoleFromPlayerId(int playerId)
+    private PlayerType DetermineRoleFromPlayerId(int playerId)
     {
         // Trova il PlayerOwnership che contiene il SerieAPlayer con l'ID specificato
         var ownership = _playerOwnerships

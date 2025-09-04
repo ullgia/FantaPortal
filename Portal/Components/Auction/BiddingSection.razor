@@ -1,0 +1,239 @@
+@using Application.Services
+@using Domain.Entities
+@inject IAuctionCommands AuctionCommands
+@inject IAuctionQueries AuctionQueries
+
+<RadzenCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" class="text-white">
+    <RadzenStack Gap="1rem">
+        <!-- Header con giocatore e timer -->
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                @if (CurrentPlayer != null)
+                {
+                    <RadzenImage Path="@GetPlayerImageUrl(CurrentPlayer.Name)" 
+                               Style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white;" 
+                               AlternateText="@CurrentPlayer.Name" />
+                    <RadzenStack Gap="0.2rem">
+                        <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                            @CurrentPlayer.Name
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.9);">
+                            @CurrentPlayer.Team - @CurrentPlayer.Role - @CurrentPlayer.FVM
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+            
+            <!-- Timer -->
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.2rem">
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white; font-weight: bold;">
+                    @FormatTime(TimeRemaining)
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: rgba(255,255,255,0.8);">
+                    Tempo rimasto
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+
+        <!-- Offerta corrente -->
+        <RadzenCard Style="background: rgba(255,255,255,0.15); border: none;">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                <RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.8); margin: 0;">
+                        Offerta attuale
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white; font-weight: bold;">
+                        @CurrentBid
+                    </RadzenText>
+                </RadzenStack>
+                
+                @if (!string.IsNullOrEmpty(highestBidderName))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@highestBidderName" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+
+        <!-- Sezione offerta -->
+        <RadzenStack Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenLabel Text="La tua offerta:" Style="color: white; font-weight: bold;" />
+                <RadzenNumeric @bind-Value="@bidAmount" 
+                             Min="@MinimumBid" 
+                             Step="1" 
+                             Style="width: 120px;" 
+                             Placeholder="Importo" />
+                <RadzenButton Text="Offri" 
+                            Icon="euro" 
+                            ButtonStyle="ButtonStyle.Warning"
+                            Size="ButtonSize.Large"
+                            Disabled="@(isProcessing || bidAmount < MinimumBid)"
+                            Click="PlaceBid" />
+            </RadzenStack>
+            
+            <!-- Pulsanti rapidi -->
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.8);">
+                    Offerte rapide:
+                </RadzenText>
+                @foreach (var quickBid in GetQuickBidAmounts())
+                {
+                    <RadzenButton Text="@((quickBid + CurrentBid).ToString(""))" 
+                                Size="ButtonSize.Small"
+                                ButtonStyle="ButtonStyle.Light"
+                                Click="@(() => SetQuickBid(quickBid + CurrentBid))"
+                                Disabled="@(quickBid + CurrentBid < MinimumBid)" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Text="@errorMessage" />
+        }
+
+        <!-- Lista offerte recenti -->
+        <RadzenCard Style="background: rgba(255,255,255,0.1); border: none;">
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: white; margin-bottom: 0.5rem;">
+                Offerte recenti:
+            </RadzenText>
+            @if (recentBids.Any())
+            {
+                <RadzenStack Gap="0.3rem">
+                    @foreach (var bid in recentBids.Take(5))
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: rgba(255,255,255,0.9);">
+                                @bid.TeamName
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: white; font-weight: bold;">
+                                @bid.Amount
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            }
+            else
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: rgba(255,255,255,0.7);">
+                    Nessuna offerta ancora
+                </RadzenText>
+            }
+        </RadzenCard>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid AuctionId { get; set; }
+    [Parameter] public Guid CurrentTeamId { get; set; }
+    [Parameter] public SerieAPlayer? CurrentPlayer { get; set; }
+    [Parameter] public decimal MinimumBid { get; set; }
+    [Parameter] public decimal CurrentBid { get; set; }
+    [Parameter] public int TimeRemaining { get; set; }
+    [Parameter] public EventCallback<decimal> OnBidPlaced { get; set; }
+
+    private decimal bidAmount;
+    private bool isProcessing = false;
+    private string errorMessage = string.Empty;
+    private string highestBidderName = string.Empty;
+    private List<BidDto> recentBids = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        bidAmount = MinimumBid;
+        await LoadRecentBids();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (bidAmount < MinimumBid)
+        {
+            bidAmount = MinimumBid;
+        }
+        
+        await LoadRecentBids();
+    }
+
+    private async Task LoadRecentBids()
+    {
+        try
+        {
+            recentBids = (await AuctionQueries.GetCurrentBidsAsync(AuctionId))
+                .OrderByDescending(b => b.Amount)
+                .ThenByDescending(b => b.PlacedAt)
+                .ToList();
+
+            if (recentBids.Any())
+            {
+                highestBidderName = recentBids.First().TeamName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore caricamento offerte: {ex.Message}");
+        }
+    }
+
+    private async Task PlaceBid()
+    {
+        try
+        {
+            isProcessing = true;
+            errorMessage = string.Empty;
+
+            await AuctionCommands.PlaceBidAsync(AuctionId, CurrentTeamId, bidAmount);
+            
+            await OnBidPlaced.InvokeAsync(bidAmount);
+            
+            // Incrementa per la prossima offerta
+            bidAmount++;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SetQuickBid(decimal amount)
+    {
+        bidAmount = amount;
+    }
+
+    private List<decimal> GetQuickBidAmounts()
+    {
+        var amounts = new List<decimal>();
+        var current = MinimumBid;
+        
+        // Aggiungi offerte rapide: minimo, +5, +10, +15
+        amounts.Add(current);
+        amounts.Add(current + 5);
+        amounts.Add(current + 10);
+        amounts.Add(current + 15);
+        
+        return amounts;
+    }
+
+    private string FormatTime(int seconds)
+    {
+        var minutes = seconds / 60;
+        var remainingSeconds = seconds % 60;
+        return $"{minutes:00}:{remainingSeconds:00}";
+    }
+
+    private string GetPlayerImageUrl(string playerName)
+    {
+        return $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(playerName)}&background=4facfe&color=fff";
+    }
+
+    // Metodo per aggiornare dall'esterno (es. tramite SignalR)
+    public async Task UpdateBidData()
+    {
+        await LoadRecentBids();
+        StateHasChanged();
+    }
+}

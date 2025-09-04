@@ -157,7 +157,7 @@ public class LeagueTests
         // Assert
         Assert.True(result.IsAutoAssign);
         Assert.False(result.IsReadyCheck);
-        Assert.Equal(RoleType.P, result.Role);
+        Assert.Equal(PlayerType.Goalkeeper, result.Role);
         Assert.Equal(1, result.Price);
         
         // Verifica che il giocatore sia stato assegnato
@@ -189,7 +189,7 @@ public class LeagueTests
         // Assert
         Assert.False(result.IsAutoAssign);
         Assert.True(result.IsReadyCheck);
-        Assert.Equal(RoleType.D, result.Role);
+        Assert.Equal(PlayerType.Defender, result.Role);
         Assert.NotNull(result.ReadyState);
         
         // Verifica che gli altri team siano eligible
@@ -311,7 +311,7 @@ public class LeagueTests
         SetTeamPlayerCounts(team2, 3, 0, 0, 0);
 
         // Act
-        var eligibleTeams = league.GetTeamsWithSlotForRole(RoleType.P);
+        var eligibleTeams = league.GetTeamsWithSlotForRole(PlayerType.Goalkeeper);
 
         // Assert
         Assert.Equal(2, eligibleTeams.Count);

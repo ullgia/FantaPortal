@@ -32,14 +32,14 @@ public class Team : BaseEntity
 
     #region Slot Management
 
-    public bool HasSlot(RoleType role) => GetAvailableSlots(role) > 0;
+    public bool HasSlot(PlayerType role) => GetAvailableSlots(role) > 0;
 
-    public int GetAvailableSlots(RoleType role) => role switch
+    public int GetAvailableSlots(PlayerType role) => role switch
     {
-        RoleType.P => MaxP - CountP,
-        RoleType.D => MaxD - CountD,
-        RoleType.C => MaxC - CountC, 
-        RoleType.A => MaxA - CountA,
+        PlayerType.Goalkeeper => MaxP - CountP,
+        PlayerType.Defender => MaxD - CountD,
+        PlayerType.Midfielder => MaxC - CountC,
+        PlayerType.Forward => MaxA - CountA,
         _ => 0
     };
 
@@ -53,7 +53,7 @@ public class Team : BaseEntity
     /// Assegna giocatore - solo League può chiamare
     /// Responsabilità: aggiornamento atomico budget e contatori
     /// </summary>
-    internal void AssignPlayerInternal(RoleType role, int price)
+    internal void AssignPlayerInternal(PlayerType role, int price)
     {
         if (price > Budget) throw new DomainException("Insufficient budget");
         if (!HasSlot(role)) throw new DomainException("No available slot");
@@ -65,7 +65,7 @@ public class Team : BaseEntity
     /// <summary>
     /// Rilascia giocatore (per undo/correzioni)
     /// </summary>
-    internal void ReleasePlayerInternal(RoleType role, int refund)
+    internal void ReleasePlayerInternal(PlayerType role, int refund)
     {
         DecrementRoleCount(role);
         Budget += refund;
@@ -75,32 +75,32 @@ public class Team : BaseEntity
 
     #region Private Helpers
 
-    private void IncrementRoleCount(RoleType role)
+    private void IncrementRoleCount(PlayerType role)
     {
         switch (role)
         {
-            case RoleType.P: CountP++; break;
-            case RoleType.D: CountD++; break;
-            case RoleType.C: CountC++; break;
-            case RoleType.A: CountA++; break;
+            case PlayerType.Goalkeeper: CountP++; break;
+            case PlayerType.Defender: CountD++; break;
+            case PlayerType.Midfielder: CountC++; break;
+            case PlayerType.Forward: CountA++; break;
         }
     }
 
-    private void DecrementRoleCount(RoleType role)
+    private void DecrementRoleCount(PlayerType role)
     {
         switch (role)
         {
-            case RoleType.P: 
-                if (CountP <= 0) throw new DomainException("No P players to release");
+            case PlayerType.Goalkeeper: 
+                if (CountP <= 0) throw new DomainException("No Goalkeeper players to release");
                 CountP--; break;
-            case RoleType.D:
-                if (CountD <= 0) throw new DomainException("No D players to release");
+            case PlayerType.Defender:
+                if (CountD <= 0) throw new DomainException("No Defender players to release");
                 CountD--; break;
-            case RoleType.C:
-                if (CountC <= 0) throw new DomainException("No C players to release");
+            case PlayerType.Midfielder:
+                if (CountC <= 0) throw new DomainException("No Central Midfielder players to release");
                 CountC--; break;
-            case RoleType.A:
-                if (CountA <= 0) throw new DomainException("No A players to release");
+            case PlayerType.Forward:
+                if (CountA <= 0) throw new DomainException("No Forward players to release");
                 CountA--; break;
         }
     }

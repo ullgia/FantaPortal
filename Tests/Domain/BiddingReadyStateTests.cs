@@ -16,7 +16,7 @@ public class BiddingReadyStateTests
         var sessionId = Guid.NewGuid();
         var nominatorTeamId = Guid.NewGuid();
         var serieAPlayerId = 123;
-        var role = RoleType.P;
+        var role = PlayerType.Goalkeeper;
         var eligibleTeamIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
         // Act
@@ -41,8 +41,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 100, RoleType.D, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 100, PlayerType.Defender, eligibleTeamIds);
 
         // Act
         var result = readyState.MarkTeamReady(eligibleTeamId);
@@ -62,8 +62,8 @@ public class BiddingReadyStateTests
         var eligibleTeamId = Guid.NewGuid();
         var nonEligibleTeamId = Guid.NewGuid(); // Team non eligible
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 200, RoleType.C, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 200, PlayerType.Midfielder, eligibleTeamIds);
 
         // Act
         var result = readyState.MarkTeamReady(nonEligibleTeamId);
@@ -82,8 +82,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 300, RoleType.A, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 300, PlayerType.Forward, eligibleTeamIds);
         readyState.MarkTeamReady(eligibleTeamId); // Prima volta
 
         // Act
@@ -102,8 +102,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 400, RoleType.P, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 400, PlayerType.Goalkeeper, eligibleTeamIds);
         readyState.MarkTeamReady(eligibleTeamId);
         readyState.Complete(); // Completa manualmente
 
@@ -122,8 +122,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 500, RoleType.D, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 500, PlayerType.Defender, eligibleTeamIds);
         readyState.MarkTeamReady(eligibleTeamId);
 
         // Act
@@ -143,8 +143,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 600, RoleType.C, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 600, PlayerType.Midfielder, eligibleTeamIds);
 
         // Act
         var result = readyState.UnmarkTeamReady(eligibleTeamId);
@@ -163,8 +163,8 @@ public class BiddingReadyStateTests
         var team2Id = Guid.NewGuid();
         var team3Id = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { team1Id, team2Id, team3Id };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 700, RoleType.A, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 700, PlayerType.Forward, eligibleTeamIds);
 
         // Act & Assert - Nessuno pronto
         Assert.False(readyState.AllTeamsReady);
@@ -193,8 +193,8 @@ public class BiddingReadyStateTests
         var team3Id = Guid.NewGuid();
         var team4Id = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { team1Id, team2Id, team3Id, team4Id }; // 4 team eligible
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 800, RoleType.P, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 800, PlayerType.Goalkeeper, eligibleTeamIds);
 
         // Act & Assert
         Assert.Equal(0.0m, readyState.CompletionPercentage); // 0/4 = 0%
@@ -219,8 +219,8 @@ public class BiddingReadyStateTests
         var sessionId = Guid.NewGuid();
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid>(); // Nessun team eligible
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 900, RoleType.D, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 900, PlayerType.Defender, eligibleTeamIds);
 
         // Act & Assert
         Assert.Equal(1.0m, readyState.CompletionPercentage);
@@ -237,8 +237,8 @@ public class BiddingReadyStateTests
         var team2Id = Guid.NewGuid();
         var team3Id = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { team1Id, team2Id, team3Id };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1000, RoleType.C, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1000, PlayerType.Midfielder, eligibleTeamIds);
 
         // Act & Assert - Tutti pending
         var pending1 = readyState.GetPendingTeamIds();
@@ -276,8 +276,8 @@ public class BiddingReadyStateTests
         var eligibleTeamId = Guid.NewGuid();
         var nonEligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1100, RoleType.A, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1100, PlayerType.Forward, eligibleTeamIds);
 
         // Act & Assert - Prima di mark ready
         Assert.False(readyState.IsTeamReady(eligibleTeamId));
@@ -297,8 +297,8 @@ public class BiddingReadyStateTests
         var nominatorTeamId = Guid.NewGuid();
         var eligibleTeamId = Guid.NewGuid();
         var eligibleTeamIds = new List<Guid> { eligibleTeamId };
-        
-        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1200, RoleType.P, eligibleTeamIds);
+
+        var readyState = BiddingReadyState.Create(sessionId, nominatorTeamId, 1200, PlayerType.Goalkeeper, eligibleTeamIds);
 
         // Act
         readyState.Complete();

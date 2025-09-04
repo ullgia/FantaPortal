@@ -9,12 +9,13 @@
     <PackageReference Include="xunit" Version="2.9.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="Moq" Version="4.20.72" />
-  <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.8" />
-  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
   <ProjectReference Include="..\Application\Application.csproj" />
   <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+  <ProjectReference Include="..\Portal\Portal.csproj" />
   </ItemGroup>
 </Project>

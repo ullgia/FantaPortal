@@ -1,0 +1,101 @@
+@using Application.Services
+@using Domain.Enums
+@inject IAuctionQueries AuctionQueries
+
+<RadzenCard>
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H6">Ordine Turni</RadzenText>
+        
+        @if (turnOrder.Any())
+        {
+            <RadzenStack Gap="0.3rem">
+                @foreach (var team in turnOrder)
+                {
+                    var style = team.IsCurrentTurn ? "background: #e3f2fd; border-left: 4px solid #1976d2; padding: 0.5rem;" : "padding: 0.5rem 0;";
+                    
+                    <div style="@style">
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="@(team.IsCurrentTurn ? "font-weight: bold; color: #1976d2;" : "")">
+                                    @team.Position. @team.TeamName
+                                </RadzenText>
+                                @if (team.IsCurrentTurn)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="TURNO" />
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    </div>
+                }
+            </RadzenStack>
+        }
+        else
+        {
+            <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+        }
+        
+        <!-- Ruolo corrente -->
+        <RadzenCard Style="background: #f5f5f5; padding: 0.75rem;">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle="TextStyle.Body2">Ruolo corrente:</RadzenText>
+                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@currentRole" />
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid LeagueId { get; set; }
+
+    private IReadOnlyList<TurnOrderDto> turnOrder = new List<TurnOrderDto>();
+    private string currentRole = "P";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTurnOrder();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadTurnOrder();
+    }
+
+    private async Task LoadTurnOrder()
+    {
+        try
+        {
+            turnOrder = await AuctionQueries.GetTurnOrderAsync(LeagueId);
+
+            var auctionState = await AuctionQueries.GetCurrentAuctionStateAsync(LeagueId);
+            if (auctionState != null)
+            {
+                currentRole = auctionState.CurrentRole.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore caricamento ordine turni: {ex.Message}");
+        }
+    }
+
+    public async Task RefreshTurnOrder()
+    {
+        await LoadTurnOrder();
+        StateHasChanged();
+    }
+
+    // Metodo per aggiornamenti diretti via SignalR (senza query)
+    public async Task UpdateTurnOrderFromSignalR(IReadOnlyList<TurnOrderDto> newTurnOrder)
+    {
+        turnOrder = newTurnOrder;
+        
+        // Aggiorna anche il ruolo corrente se necessario
+        var currentTeam = newTurnOrder.FirstOrDefault(t => t.IsCurrentTurn);
+        if (currentTeam != null)
+        {
+            // Il ruolo deve essere passato separatamente o recuperato da altro stato
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+}

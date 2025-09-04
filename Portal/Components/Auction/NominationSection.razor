@@ -1,0 +1,141 @@
+@using Application.Services
+@using Domain.Entities
+@inject IAuctionCommands AuctionCommands
+@inject IAuctionQueries AuctionQueries
+
+<RadzenCard>
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H5">
+            @if (IsCurrentTurn)
+            {
+                <span>È il tuo turno - Nomina un giocatore</span>
+            }
+            else
+            {
+                <span>In attesa di nomina...</span>
+            }
+        </RadzenText>
+
+        @if (IsCurrentTurn)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                <RadzenButton Text="Seleziona Giocatore" 
+                            Icon="person_add" 
+                            ButtonStyle="ButtonStyle.Primary"
+                            Size="ButtonSize.Large"
+                            Click="OpenPlayerSelection" />
+                
+                @if (selectedPlayer != null)
+                {
+                    <RadzenCard Style="background: #f5f5f5; padding: 0.5rem 1rem;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenImage Path="@GetPlayerImageUrl(selectedPlayer.Name)" 
+                                       Style="width: 40px; height: 40px; border-radius: 50%;" 
+                                       AlternateText="@selectedPlayer.Name" />
+                            <RadzenStack Gap="0.1rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: bold;">
+                                    @selectedPlayer.Name
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: #666;">
+                                    @selectedPlayer.Team - @selectedPlayer.Role
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenCard>
+                    
+                    <RadzenButton Text="Conferma Nomina" 
+                                Icon="check" 
+                                ButtonStyle="ButtonStyle.Success"
+                                Size="ButtonSize.Large"
+                                Disabled="@isProcessing"
+                                Click="ConfirmNomination" />
+                }
+            </RadzenStack>
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Text="@errorMessage" />
+            }
+        }
+        else
+        {
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Medium" />
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: #666;">
+                    Attendere la nomina del team corrente...
+                </RadzenText>
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+<!-- Dialog Selezione Giocatore -->
+<RadzenDialog @bind-Visible="@showPlayerDialog">
+    <PlayerSelectionDialog OnPlayerSelected="OnPlayerSelected" 
+                          OnCancelled="ClosePlayerSelection"
+                          AuctionId="@AuctionId" />
+</RadzenDialog>
+
+@code {
+    [Parameter] public Guid AuctionId { get; set; }
+    [Parameter] public Guid CurrentTeamId { get; set; }
+    [Parameter] public bool IsCurrentTurn { get; set; }
+    [Parameter] public EventCallback<SerieAPlayer> OnPlayerNominated { get; set; }
+
+    private SerieAPlayer? selectedPlayer;
+    private bool showPlayerDialog = false;
+    private bool isProcessing = false;
+    private string errorMessage = string.Empty;
+
+    private void OpenPlayerSelection()
+    {
+        showPlayerDialog = true;
+        errorMessage = string.Empty;
+    }
+
+    private void ClosePlayerSelection()
+    {
+        showPlayerDialog = false;
+    }
+
+    private void OnPlayerSelected(SerieAPlayer player)
+    {
+        selectedPlayer = player;
+        showPlayerDialog = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmNomination()
+    {
+        if (selectedPlayer == null) return;
+
+        try
+        {
+            isProcessing = true;
+            errorMessage = string.Empty;
+
+            await AuctionCommands.NominatePlayerAsync(AuctionId, CurrentTeamId, selectedPlayer.Id);
+            
+            // Notifica il componente padre
+            await OnPlayerNominated.InvokeAsync(selectedPlayer);
+            
+            // Reset
+            selectedPlayer = null;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetPlayerImageUrl(string playerName)
+    {
+        // Per ora ritorna un placeholder
+        return $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(playerName)}&background=667eea&color=fff";
+    }
+}

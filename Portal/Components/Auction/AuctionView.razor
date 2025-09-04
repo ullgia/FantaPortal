@@ -1,0 +1,386 @@
+@page "/auction/{auctionId:guid}"
+@using Application.Services
+@using Application.Events
+@using Domain.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IAuctionQueries AuctionQueries
+@inject IAuctionCommands AuctionCommands
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@attribute [Authorize]
+@implements IAsyncDisposable
+
+<PageTitle>Asta - @leagueName</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <!-- Header Asta -->
+    <RadzenCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" class="text-white">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: white;">@leagueName</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.9);">
+                    Turno @currentTurn di @totalTeams - Ruolo: @currentRole
+                </RadzenText>
+            </RadzenStack>
+            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@auctionState" />
+        </RadzenStack>
+    </RadzenCard>
+
+    @if (auctionState == "InProgress")
+    {
+        <!-- Sezione Nomina/Offerta -->
+        <RadzenRow>
+            <RadzenColumn Size="8">
+                @if (currentPhase == "Nomination")
+                {
+                    <NominationSection AuctionId="@AuctionId" 
+                                     CurrentTeamId="@currentTeamId" 
+                                     IsCurrentTurn="@isMyTurn"
+                                     OnPlayerNominated="OnPlayerNominated" />
+                }
+                else if (currentPhase == "ReadyCheck")
+                {
+                    <ReadyCheckSection @ref="readyCheckSection" 
+                                     AuctionId="@AuctionId" 
+                                     CurrentTeamId="@currentTeamId"
+                                     OnReadyStateChanged="OnReadyStateChanged" />
+                }
+                else if (currentPhase == "Bidding")
+                {
+                    <BiddingSection AuctionId="@AuctionId" 
+                                  CurrentTeamId="@currentTeamId"
+                                  CurrentPlayer="@nominatedPlayer"
+                                  MinimumBid="@minimumBid"
+                                  CurrentBid="@highestBid"
+                                  TimeRemaining="@biddingTimeRemaining"
+                                  OnBidPlaced="OnBidPlaced" />
+                }
+            </RadzenColumn>
+            
+            <RadzenColumn Size="4">
+                <!-- Pannello Info Team -->
+                <TeamInfoPanel TeamId="@currentTeamId" />
+                
+                <!-- Pannello Ordine Turni -->
+                <TurnOrderPanel @ref="turnOrderPanel" LeagueId="@AuctionId" />
+            </RadzenColumn>
+        </RadzenRow>
+    }
+    else
+    {
+        <!-- Stato non attivo -->
+        <RadzenCard>
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenIcon Icon="pause_circle" Style="font-size: 3rem; color: #ffa726;" />
+                <RadzenText TextStyle="TextStyle.H5">L'asta è attualmente @auctionState.ToLower()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: #666;">
+                    Attendere che l'asta venga ripresa dall'amministratore
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid AuctionId { get; set; }
+    
+    private HubConnection? hubConnection;
+    private string leagueName = "Caricamento...";
+    private string auctionState = "Loading";
+    private string currentPhase = "Nomination";
+    private int currentTurn = 1;
+    private int totalTeams = 1;
+    private string currentRole = "P";
+    private Guid currentTeamId;
+    private bool isMyTurn = false;
+    
+    // Dati offerta
+    private SerieAPlayer? nominatedPlayer;
+    private decimal minimumBid = 1;
+    private decimal highestBid = 0;
+    private int biddingTimeRemaining = 0;
+
+    // Riferimenti ai componenti per aggiornamenti SignalR
+    private TurnOrderPanel? turnOrderPanel;
+    private ReadyCheckSection? readyCheckSection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Carica stato iniziale
+        await LoadAuctionState();
+        
+        // Configura SignalR
+        await InitializeSignalR();
+    }
+
+    private async Task LoadAuctionState()
+    {
+        try
+        {
+            var overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+            if (overview != null)
+            {
+                leagueName = overview.LeagueName;
+                auctionState = overview.Status.ToString();
+                currentTurn = overview.CurrentTurnPosition;
+                totalTeams = overview.TotalTeams;
+                currentRole = overview.CurrentRole.ToString();
+                currentTeamId = overview.CurrentTurnTeamId;
+                
+                // Determina se è il mio turno (per ora mock)
+                // TODO: Implementare autenticazione team
+                isMyTurn = true;
+                
+                // Determina fase corrente
+                if (overview.IsReadyCheckActive)
+                {
+                    currentPhase = "ReadyCheck";
+                }
+                else if (overview.IsBiddingActive)
+                {
+                    currentPhase = "Bidding";
+                    await LoadBiddingData();
+                }
+                else
+                {
+                    currentPhase = "Nomination";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // TODO: Gestione errori
+            Console.WriteLine($"Errore caricamento stato: {ex.Message}");
+        }
+    }
+
+    private async Task LoadBiddingData()
+    {
+        try
+        {
+            var bids = await AuctionQueries.GetCurrentBidsAsync(AuctionId);
+            if (bids.Any())
+            {
+                highestBid = bids.Max(b => b.Amount);
+                minimumBid = highestBid + 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Errore caricamento offerte: {ex.Message}");
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/auctionHub"))
+            .Build();
+
+        // Registra handlers per eventi legacy
+        hubConnection.On<string, object>(SignalREventNames.AuctionStateChanged, OnAuctionStateChanged);
+        hubConnection.On<Guid, int>(SignalREventNames.BiddingTimerUpdate, OnTimerUpdate);
+        hubConnection.On<Guid, decimal, string>(SignalREventNames.NewHighestBid, OnNewHighestBid);
+        hubConnection.On<Guid>(SignalREventNames.ReadyCheckStarted, OnReadyCheckStarted);
+        hubConnection.On<Guid>(SignalREventNames.BiddingStarted, OnBiddingStarted);
+        hubConnection.On<Guid, string>(SignalREventNames.TurnAdvanced, OnTurnAdvanced);
+        
+        // Nuovi handlers ottimizzati con DTO completi
+        hubConnection.On<IReadOnlyList<TurnOrderDto>>(SignalREventNames.TurnOrderUpdate, OnTurnOrderUpdate);
+        hubConnection.On<PlayerNominatedDto>(SignalREventNames.PlayerNominated, OnPlayerNominatedSignalR);
+        hubConnection.On<IReadOnlyList<ReadyStateDto>>(SignalREventNames.ReadyStatesUpdate, OnReadyStatesUpdate);
+        hubConnection.On<BidDto>(SignalREventNames.BidUpdate, OnBidUpdate);
+        hubConnection.On<AuctionOverviewDto>(SignalREventNames.FullStateUpdate, OnFullStateUpdate);
+        hubConnection.On<string>(SignalREventNames.PhaseChanged, OnPhaseChanged);
+
+        await hubConnection.StartAsync();
+        
+        // Unisciti al gruppo dell'asta
+        await hubConnection.InvokeAsync("JoinAuctionGroup", AuctionId.ToString());
+    }
+
+    // Event handlers per SignalR
+    private async Task OnAuctionStateChanged(string newState, object data)
+    {
+        auctionState = newState;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnTimerUpdate(Guid auctionId, int timeRemaining)
+    {
+        if (auctionId == AuctionId)
+        {
+            biddingTimeRemaining = timeRemaining;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnNewHighestBid(Guid auctionId, decimal amount, string teamName)
+    {
+        if (auctionId == AuctionId)
+        {
+            highestBid = amount;
+            minimumBid = amount + 1;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnReadyCheckStarted(Guid auctionId)
+    {
+        if (auctionId == AuctionId)
+        {
+            currentPhase = "ReadyCheck";
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnBiddingStarted(Guid auctionId)
+    {
+        if (auctionId == AuctionId)
+        {
+            currentPhase = "Bidding";
+            await LoadBiddingData();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnTurnAdvanced(Guid auctionId, string newRole)
+    {
+        if (auctionId == AuctionId)
+        {
+            currentPhase = "Nomination";
+            currentRole = newRole;
+            await LoadAuctionState();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Event handlers per componenti
+    private async Task OnPlayerNominated(SerieAPlayer player)
+    {
+        nominatedPlayer = player;
+        // La fase cambierà tramite SignalR
+    }
+
+    private async Task OnReadyStateChanged()
+    {
+        // Aggiorna stato se necessario
+        await LoadAuctionState();
+    }
+
+    private async Task OnBidPlaced(decimal amount)
+    {
+        // L'aggiornamento arriverà tramite SignalR
+    }
+
+    // Nuovi handlers ottimizzati per SignalR con DTO completi
+    private async Task OnTurnOrderUpdate(IReadOnlyList<TurnOrderDto> newTurnOrder)
+    {
+        // Aggiorna i dati del turno corrente
+        var currentTurnTeam = newTurnOrder.FirstOrDefault(t => t.IsCurrentTurn);
+        if (currentTurnTeam != null)
+        {
+            currentTurn = currentTurnTeam.Position;
+            currentTeamId = currentTurnTeam.TeamId;
+        }
+
+        // Aggiorna il TurnOrderPanel via SignalR senza rifare query
+        if (turnOrderPanel != null)
+        {
+            await turnOrderPanel.UpdateTurnOrderFromSignalR(newTurnOrder);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnPlayerNominatedSignalR(PlayerNominatedDto playerData)
+    {
+        // Aggiorna ReadyCheckSection con dati completi
+        if (readyCheckSection != null)
+        {
+            await readyCheckSection.OnPlayerNominated(playerData);
+        }
+
+        // Cambia fase a ReadyCheck
+        currentPhase = "ReadyCheck";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnReadyStatesUpdate(IReadOnlyList<ReadyStateDto> readyStates)
+    {
+        // Aggiorna ReadyCheckSection direttamente
+        if (readyCheckSection != null)
+        {
+            await readyCheckSection.UpdateReadyStateFromSignalR(readyStates);
+        }
+    }
+
+    private async Task OnBidUpdate(BidDto bid)
+    {
+        // Aggiorna BiddingSection con la nuova offerta
+        highestBid = bid.Amount;
+        minimumBid = bid.Amount + 1;
+        
+        // TODO: Aggiornare BiddingSection se esiste
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnFullStateUpdate(AuctionOverviewDto overview)
+    {
+        // Aggiornamento completo dello stato (raro)
+        leagueName = overview.LeagueName;
+        auctionState = overview.Status.ToString();
+        currentTurn = overview.CurrentTurnPosition;
+        totalTeams = overview.TotalTeams;
+        currentRole = overview.CurrentRole.ToString();
+        currentTeamId = overview.CurrentTurnTeamId;
+
+        // Determina fase corrente
+        if (overview.IsReadyCheckActive)
+        {
+            currentPhase = "ReadyCheck";
+        }
+        else if (overview.IsBiddingActive)
+        {
+            currentPhase = "Bidding";
+        }
+        else
+        {
+            currentPhase = "Nomination";
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnPhaseChanged(string newPhase)
+    {
+        currentPhase = newPhase;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+
+<style>
+    .player-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .player-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .player-card.selected {
+        border: 2px solid #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+</style>
