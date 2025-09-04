@@ -18,27 +18,25 @@ public class BiddingTimerExpiredHandler : IDomainEventHandler<BiddingTimerExpire
     {
         try
         {
-            _logger.LogInformation("Bidding timer expired for turn {TurnId}, finalizing league {LeagueId}", 
-                @event.TurnId, @event.LeagueId);
-                
-            // Finalize the turn using League-based approach
-            var result = await _auctionCommands.FinalizeTurnAsync(@event.LeagueId);
+            _logger.LogInformation("Bidding timer expired for turn {TurnId}, session {SessionId} (league {LeagueId})", @event.TurnId, @event.SessionId, @event.LeagueId);
             
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully finalized turn {TurnId} for league {LeagueId}: {Message}", 
-                    @event.TurnId, @event.LeagueId, result.Message);
-            }
-            else
-            {
-                _logger.LogWarning("Failed to finalize turn {TurnId} for league {LeagueId}: {Message}", 
-                    @event.TurnId, @event.LeagueId, result.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling bidding timer expired for turn {TurnId}, league {LeagueId}", 
-                @event.TurnId, @event.LeagueId);
-        }
-    }
-}
+            var result = await _auctionCommands.FinalizeTurnAsync(@event.LeagueId);
+             
+             if (result.IsSuccess)
+             {
+                _logger.LogInformation("Successfully finalized turn {TurnId} for session {SessionId}: {Message}", 
+                    @event.TurnId, @event.SessionId, result.Message);
+             }
+             else
+             {
+                _logger.LogWarning("Failed to finalize turn {TurnId} for session {SessionId}: {Message}", 
+                    @event.TurnId, @event.SessionId, result.Message);
+             }
+         }
+         catch (Exception ex)
+         {
+            _logger.LogError(ex, "Error handling bidding timer expired for turn {TurnId}, session {SessionId}", 
+                @event.TurnId, @event.SessionId);
+         }
+     }
+ }

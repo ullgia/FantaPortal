@@ -5,23 +5,34 @@ using Domain.Exceptions;
 
 public class Bid : BaseEntity
 {
-    public Guid TurnId { get; private set; }
-    public Guid TeamId { get; private set; }
+    public Guid AuctionTurnId { get; private set; }
+    public Guid LeaguePlayerId { get; private set; }
+    public int SerieAPlayerId { get; private set; }
     public int Amount { get; private set; }
-    public DateTime PlacedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
+    public bool IsWinningBid { get; internal set; }
 
-    private Bid() { }
+    public virtual AuctionTurn AuctionTurn { get; private set; } = default!;
+    public virtual LeaguePlayer Bidder { get; private set; } = default!;
+    public virtual SerieAPlayer TargetPlayer { get; private set; } = default!;
 
-    public static Bid Create(Guid turnId, Guid teamId, int amount)
+    public static Bid Create(AuctionTurn turn, LeaguePlayer bidder, SerieAPlayer target, int amount)
     {
-        if (turnId == Guid.Empty) throw new DomainException("TurnId required");
-        if (teamId == Guid.Empty) throw new DomainException("TeamId required");
-        if (amount <= 0) throw new DomainException("Amount must be positive");
+        if (turn is null) throw new DomainException("turn required");
+        if (bidder is null) throw new DomainException("bidder required");
+        if (target is null) throw new DomainException("target required");
+        if (amount <= 0) throw new DomainException("amount must be positive");
         return new Bid
         {
-            TurnId = turnId,
-            TeamId = teamId,
-            Amount = amount
+            AuctionTurn = turn,
+            AuctionTurnId = turn.Id,
+            Bidder = bidder,
+            LeaguePlayerId = bidder.Id,
+            TargetPlayer = target,
+            SerieAPlayerId = target.Id,
+            Amount = amount,
+            Timestamp = DateTime.UtcNow,
+            IsWinningBid = false
         };
     }
 }

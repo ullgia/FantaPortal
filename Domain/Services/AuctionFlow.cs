@@ -34,65 +34,57 @@ public static class AuctionFlow
         IReadOnlyList<Guid> teamOrder,
         IReadOnlyDictionary<Guid, LeaguePlayer> teams,
         PlayerType currentRole,
-        int currentIndex)
+        int currentIndex,
+        IReadOnlyList<PlayerType>? configuredOrder = null)
     {
-        var roles = new[] { PlayerType.Goalkeeper, PlayerType.Defender, PlayerType.Midfielder, PlayerType.Forward };
+        var roles = configuredOrder?.Count > 0
+            ? configuredOrder.ToArray()
+            : new[] { PlayerType.Goalkeeper, PlayerType.Defender, PlayerType.Midfielder, PlayerType.Forward };
         var currentRoleIndex = Array.IndexOf(roles, currentRole);
         
-        Console.WriteLine($"=== AdvanceUntilEligible DEBUG ===");
-        Console.WriteLine($"Input: currentRole={currentRole}, currentIndex={currentIndex}, teamCount={teamOrder.Count}");
+    // Debug tracing rimosso: mantenere purezza dominio. (Si può integrare un logger esterno via adapter se necessario.)
         
         // Prima prova a completare il ciclo nello stesso ruolo (logica circolare)
         // Controlla dal prossimo team fino alla fine
-        Console.WriteLine($"Step 1: Checking teams {currentIndex + 1} to {teamOrder.Count - 1} for role {currentRole}");
         for (int teamIdx = currentIndex + 1; teamIdx < teamOrder.Count; teamIdx++)
         {
             var teamId = teamOrder[teamIdx];
             if (teams.TryGetValue(teamId, out var team))
             {
                 var hasSlot = team.HasSlot(currentRole);
-                Console.WriteLine($"  Team {teamIdx}: hasSlot({currentRole})={hasSlot}");
                 if (hasSlot)
                 {
-                    Console.WriteLine($"  -> RETURN ({currentRole}, {teamIdx})");
                     return (currentRole, teamIdx);
                 }
             }
         }
         
         // Poi controlla dall'inizio fino al team corrente (completamento circolare)
-        Console.WriteLine($"Step 2: Checking teams 0 to {currentIndex} for role {currentRole}");
         for (int teamIdx = 0; teamIdx <= currentIndex; teamIdx++)
         {
             var teamId = teamOrder[teamIdx];
             if (teams.TryGetValue(teamId, out var team))
             {
                 var hasSlot = team.HasSlot(currentRole);
-                Console.WriteLine($"  Team {teamIdx}: hasSlot({currentRole})={hasSlot}");
                 if (hasSlot)
                 {
-                    Console.WriteLine($"  -> RETURN ({currentRole}, {teamIdx})");
                     return (currentRole, teamIdx);
                 }
             }
         }
         
         // Solo dopo aver completato il ciclo del ruolo corrente, passa ai ruoli successivi
-        Console.WriteLine($"Step 3: Advancing to next roles starting from index {currentRoleIndex + 1}");
         for (int roleIdx = currentRoleIndex + 1; roleIdx < roles.Length; roleIdx++)
         {
             var nextRole = roles[roleIdx];
-            Console.WriteLine($"  Checking role {nextRole}");
             for (int teamIdx = 0; teamIdx < teamOrder.Count; teamIdx++)
             {
                 var teamId = teamOrder[teamIdx];
                 if (teams.TryGetValue(teamId, out var team))
                 {
                     var hasSlot = team.HasSlot(nextRole);
-                    Console.WriteLine($"    Team {teamIdx}: hasSlot({nextRole})={hasSlot}");
                     if (hasSlot)
                     {
-                        Console.WriteLine($"    -> RETURN ({nextRole}, {teamIdx})");
                         return (nextRole, teamIdx);
                     }
                 }
@@ -100,7 +92,6 @@ public static class AuctionFlow
         }
         
         // Nessun turno disponibile - asta completata
-        Console.WriteLine($"-> RETURN (null, {currentIndex})");
         return (null, currentIndex);
     }
 }

@@ -15,8 +15,6 @@ public class AuctionSessionConfiguration : IEntityTypeConfiguration<AuctionSessi
         // Basic auction properties
         builder.Property(a => a.Status).IsRequired();
         builder.Property(a => a.CurrentRole).IsRequired();
-        builder.Property(a => a.BasePrice).IsRequired();
-        builder.Property(a => a.MinIncrement).IsRequired();
 
         // Persist current bidding state
         builder.Property(a => a.IsBiddingActive).HasColumnName("IsBiddingActive");

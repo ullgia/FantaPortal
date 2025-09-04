@@ -2,13 +2,20 @@ namespace Domain.Entities;
 
 using Domain.Common;
 using Domain.Enums;
-using Domain.Exceptions;
 using Domain.Events;
+using Domain.Exceptions;
+using Domain.Services;
 using Domain.ValueObjects;
 
 public class League : AggregateRoot
 {
     public string Name { get; private set; } = string.Empty;
+    // Configurazioni di lega (semplificate per ora)
+    private readonly List<PlayerType> _roleOrder = new() { PlayerType.Goalkeeper, PlayerType.Defender, PlayerType.Midfielder, PlayerType.Forward };
+    public IReadOnlyList<PlayerType> RoleOrder => _roleOrder.AsReadOnly();
+
+    public TimerCalculationStrategy TimerStrategy { get; private set; } = TimerCalculationStrategy.Adaptive; // default provvisorio
+    public int BiddingBaseSeconds { get; private set; } = 60;
     
     // Collezioni interne
     private readonly List<LeaguePlayer> _teams = new();
@@ -60,16 +67,19 @@ public class League : AggregateRoot
 
     #region Auction Lifecycle
 
-    public void StartAuction(int basePrice = 1, int minIncrement = 1, IReadOnlyList<Guid>? customOrder = null)
+    public void StartAuction()
     {
         if (ActiveAuction != null && ActiveAuction.CannotStart())
             throw new DomainException("Cannot start auction in current state");
             
         if (_teams.Count < 2)
             throw new DomainException("At least 2 teams required to start auction");
+        
+        var teams = Teams.Select(x => x.Id).ToList();
+        // randomize order
+        teams = teams.OrderBy(_ => Guid.NewGuid()).ToList();
 
-        var order = customOrder ?? _teams.Select(t => t.Id).ToList();
-        ActiveAuction = AuctionSession.CreateInternal(Id, basePrice, minIncrement, order);
+        ActiveAuction = AuctionSession.CreateInternal(this);
         ActiveAuction.Start();
         
         // Evento per UI e timer setup
@@ -129,12 +139,7 @@ public class League : AggregateRoot
             var nextTurn = ActiveAuction.AdvanceToNextTurn(teamsDict);
             
             // Eventi per UI
-            RaiseDomainEvent(new PlayerAssigned(Id, nominatorTeamId, player.Id, result.Price, nextTurn));
-        }
-        else
-        {
-            // Avvia bidding - eventi per timer e UI
-            RaiseDomainEvent(new BiddingPhaseStarted(Id, result.BiddingInfo!));
+            RaiseDomainEvent(new PlayerAssigned(Id, ActiveAuction.Id, nominatorTeamId, player.Id, result.Price, nextTurn));
         }
         
         return result;
@@ -144,7 +149,7 @@ public class League : AggregateRoot
     /// Piazza offerta con validazione atomica budget
     /// Responsabilità: validazione budget, delegare ad AuctionSession
     /// </summary>
-    public void PlaceBid(Guid teamId, int amount)
+    public void PlaceBid(Guid teamId, int amount, ITimerCalculationServiceFactory factory)
     {
         if (ActiveAuction?.Status != AuctionStatus.Running)
             throw new DomainException("No active auction");
@@ -153,11 +158,14 @@ public class League : AggregateRoot
         if (team.Budget < amount)
             throw new DomainException($"Insufficient budget. Available: {team.Budget}, Required: {amount}");
 
+
         // Delega ad AuctionSession per logica bidding
-        var bidResult = ActiveAuction.PlaceBid(teamId, amount);
+        var bidResult = ActiveAuction.PlaceBid(teamId, amount,factory);
+
+
         
         // Evento per aggiornamento UI in tempo reale
-        RaiseDomainEvent(new BidPlaced(Id, teamId, amount, bidResult.TimeRemaining));
+        RaiseDomainEvent(new BidPlaced(Id,ActiveAuction.Id, teamId, amount, bidResult.TimeRemaining));
     }
 
     /// <summary>
@@ -177,7 +185,7 @@ public class League : AggregateRoot
         var nextTurn = ActiveAuction.FinalizeBidding(_teams.ToDictionary(t => t.Id));
         
         // Evento per UI e stop timer
-        RaiseDomainEvent(new PlayerAssigned(Id, winningBid.TeamId, player.Id, winningBid.Amount, nextTurn));
+        RaiseDomainEvent(new PlayerAssigned(Id, ActiveAuction.Id, winningBid.TeamId, player.Id, winningBid.Amount, nextTurn));
     }
 
     /// <summary>

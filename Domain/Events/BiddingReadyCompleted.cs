@@ -7,5 +7,6 @@ public sealed record BiddingReadyCompleted(
     Guid NominatorTeamId,
     int SerieAPlayerId,
     PlayerType Role,
-    IReadOnlyList<Guid> EligibleOtherTeamIds
+    IReadOnlyList<Guid> EligibleOtherTeamIds,
+    int TimerSeconds
 );

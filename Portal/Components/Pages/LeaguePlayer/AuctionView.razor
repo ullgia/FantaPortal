@@ -56,6 +56,8 @@
                     <NominationSection AuctionId="@AuctionId" 
                                      CurrentTeamId="@currentTeamId" 
                                      IsCurrentTurn="@isMyTurn"
+                                     LeagueId="@LeagueId"
+                                     CurrentRole="@MapRole(currentRole)"
                                      OnPlayerNominated="OnPlayerNominated" />
                 }
                 else if (currentPhase == "ReadyCheck")
@@ -202,15 +204,7 @@
             .WithUrl(Navigation.ToAbsoluteUri("/auctionHub"))
             .Build();
 
-        // Registra handlers per eventi legacy
-        hubConnection.On<string, object>(SignalREventNames.AuctionStateChanged, OnAuctionStateChanged);
-        hubConnection.On<Guid, int>(SignalREventNames.BiddingTimerUpdate, OnTimerUpdate);
-        hubConnection.On<Guid, decimal, string>(SignalREventNames.NewHighestBid, OnNewHighestBid);
-        hubConnection.On<Guid>(SignalREventNames.ReadyCheckStarted, OnReadyCheckStarted);
-        hubConnection.On<Guid>(SignalREventNames.BiddingStarted, OnBiddingStarted);
-        hubConnection.On<Guid, string>(SignalREventNames.TurnAdvanced, OnTurnAdvanced);
-        
-        // Nuovi handlers ottimizzati con DTO completi
+        // Handlers ottimizzati con DTO completi
         hubConnection.On<IReadOnlyList<TurnOrderDto>>(SignalREventNames.TurnOrderUpdate, OnTurnOrderUpdate);
         hubConnection.On<PlayerNominatedDto>(SignalREventNames.PlayerNominated, OnPlayerNominatedSignalR);
         hubConnection.On<IReadOnlyList<ReadyStateDto>>(SignalREventNames.ReadyStatesUpdate, OnReadyStatesUpdate);
@@ -383,6 +377,18 @@
     {
         currentPhase = newPhase;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private Domain.Enums.PlayerType MapRole(string role)
+    {
+        return role switch
+        {
+            "G" or "Goalkeeper" => Domain.Enums.PlayerType.Goalkeeper,
+            "D" or "Defender" => Domain.Enums.PlayerType.Defender,
+            "C" or "M" or "Midfielder" => Domain.Enums.PlayerType.Midfielder,
+            "A" or "F" or "Forward" => Domain.Enums.PlayerType.Forward,
+            _ => Domain.Enums.PlayerType.Midfielder
+        };
     }
 
     public async ValueTask DisposeAsync()

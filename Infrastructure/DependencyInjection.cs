@@ -25,10 +25,7 @@ namespace Infrastructure
             services.AddScoped<Application.Services.IAuctionQueries, Infrastructure.Services.AuctionQueries>();
             services.AddScoped<Application.Services.ILeagueQueries, Infrastructure.Services.LeagueQueries>();
             services.AddScoped<Application.Services.ILeagueCommands, Infrastructure.Services.LeagueCommands>();
-            
-            // Timer data service
-            services.AddScoped<Application.Services.IAuctionTimerDataService, Infrastructure.Services.AuctionTimerDataService>();
-            
+           
             // Magic link service
             services.AddScoped<Infrastructure.Services.IMagicLinkService, Infrastructure.Services.MagicLinkService>();
             

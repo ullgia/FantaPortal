@@ -1,5 +1,6 @@
 namespace Domain.Events;
 
+using Domain.Enums;
 using Domain.ValueObjects;
 
 // Eventi per avvio/gestione timer
@@ -11,38 +12,23 @@ public sealed record AuctionStarted(
     public int TimerSeconds => 60; // Default turn timer
 }
 
-public sealed record BiddingPhaseStarted(
-    Guid LeagueId, 
-    BiddingInfo BiddingInfo)
-{
-    public int TimerSeconds => 30; // Default bidding timer  
-}
-
 public sealed record BidPlaced(
     Guid LeagueId,
+    Guid SessionId,
     Guid TeamId, 
     int Amount,
     int RemainingTime)
 {
-    // Per reset timer UI se necessario
+    // Evento per aggiornare timer e UI
 }
 
 // Eventi per stop timer e avanzamento UI
 public sealed record PlayerAssigned(
     Guid LeagueId,
+    Guid SessionId,
     Guid TeamId,
     int PlayerId,
     int Price,
-    TurnInfo NextTurn)
-{
-    public bool StopTimer => true;
-}
-
-public sealed record BiddingRoundFinalized(
-    Guid LeagueId,
-    Guid WinnerTeamId,
-    int PlayerId, 
-    int Amount,
     TurnInfo NextTurn)
 {
     public bool StopTimer => true;

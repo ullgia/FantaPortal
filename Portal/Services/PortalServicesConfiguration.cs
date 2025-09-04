@@ -23,7 +23,8 @@ public static class PortalServicesConfiguration
         services.AddRadzenComponents();
 
         // Magic link validator (replace with real implementation later)
-        services.AddSingleton<IMagicLinkValidator, InMemoryMagicLinkValidator>();
+        services.AddScoped<IMagicLinkValidator, DatabaseMagicLinkValidator>();
+        services.AddScoped<Infrastructure.Services.IMagicLinkService, Infrastructure.Services.MagicLinkService>();
     services.AddScoped<IMagicGrantAccessor, MagicGrantAccessor>();
         
         // HTTP context accessor

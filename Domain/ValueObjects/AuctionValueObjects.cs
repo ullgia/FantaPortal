@@ -18,8 +18,7 @@ public record BiddingInfo(
     int PlayerId,
     Guid HighestBidder,
     int HighestBid,
-    IReadOnlyList<Guid> EligibleTeams,
-    int RemainingTime);
+    IReadOnlyList<Guid> EligibleTeams);
 
 // Risultati operazioni
 public record NominationResult(

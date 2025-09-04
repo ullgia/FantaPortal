@@ -31,5 +31,24 @@ public sealed class LeagueQueries(ApplicationDbContext db) : ILeagueQueries
         )).ToList();
     }
 
+    public async Task<int> GetBiddingBaseSecondsAsync(Guid leagueId, CancellationToken ct = default)
+    {
+        var league = await _db.Leagues
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.Id == leagueId, ct);
+
+        return league?.BiddingBaseSeconds ?? 30; // fallback
+    }
+
+    public async Task<int> GetBiddingBaseSecondsBySessionAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        var league = await _db.Leagues
+            .Include(l => l.ActiveAuction)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(l => l.ActiveAuction != null && l.ActiveAuction.Id == sessionId, ct);
+
+        return league?.BiddingBaseSeconds ?? 30; // fallback
+    }
+
     // Le funzioni user-team vengono ora gestite direttamente interrogando Teams.OwnerUserId
 }

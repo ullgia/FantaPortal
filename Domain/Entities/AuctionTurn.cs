@@ -9,15 +9,17 @@ public class AuctionTurn : BaseEntity
     public Guid SessionId { get; private set; }
     public Guid PlayerId { get; private set; }
     public virtual LeaguePlayer Player { get; private set; } = null!;
+    public virtual AuctionSession AuctionSession { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public AuctionTurnStatus Status { get; private set; } = AuctionTurnStatus.Nomination;
     public bool IsTimerActive { get; private set; }
     public DateTime? TimerStartedAt { get; private set; }
     public int RemainingSeconds { get; private set; }
-
+    private readonly List<Bid> _bids = new();
+    public IReadOnlyCollection<Bid> Bids => _bids.AsReadOnly();
     private AuctionTurn() { }
 
-    public static AuctionTurn Create(Guid sessionId, Guid playerId)
+    internal static AuctionTurn Create(Guid sessionId, Guid playerId)
     {
         if (sessionId == Guid.Empty) throw new DomainException("SessionId required");
         if (playerId == Guid.Empty) throw new DomainException("PlayerId required");

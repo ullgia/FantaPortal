@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using Application.Events;
+using Domain.Services;
 
 namespace Portal.Hubs;
 
@@ -39,8 +40,8 @@ public class AuctionHub : Hub
     public async Task Nominate(Guid sessionId, Guid nominatorTeamId, int serieAPlayerId, [FromServices] Application.Services.IAuctionCommands commands)
         => await commands.NominatePlayerAsync(sessionId, nominatorTeamId, serieAPlayerId, Context.ConnectionAborted);
 
-    public async Task PlaceBid(Guid sessionId, Guid teamId, int amount, [FromServices] Application.Services.IAuctionCommands commands)
-        => await commands.PlaceBidAsync(sessionId, teamId, amount, Context.ConnectionAborted);
+    public async Task PlaceBid(Guid sessionId, Guid teamId, int amount, [FromServices] Application.Services.IAuctionCommands commands, [FromServices] ITimerCalculationServiceFactory factory)
+        => await commands.PlaceBidAsync(sessionId, teamId, amount,factory, Context.ConnectionAborted);
 
     // Metodi per aggiornamenti ottimizzati (chiamati dal backend)
     public async Task SendTurnOrderUpdate(Guid leagueId, IReadOnlyList<Application.Services.TurnOrderDto> turnOrder)

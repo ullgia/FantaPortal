@@ -33,8 +33,8 @@ public sealed class BiddingReadyCompletedHandler : IDomainEventHandler<BiddingRe
     {
         try
         {
-            _logger.LogInformation("Handling BiddingReadyCompleted for session {SessionId}, player {PlayerId}", 
-                @event.SessionId, @event.SerieAPlayerId);
+            _logger.LogInformation("Handling BiddingReadyCompleted for session {SessionId}, player {PlayerId}, timer {TimerSeconds}s", 
+                @event.SessionId, @event.SerieAPlayerId, @event.TimerSeconds);
 
             // 1. Avvia il bidding nella sessione
             var biddingInfo = await _auctionCommands.StartBiddingAfterReadyAsync(@event.SessionId);
@@ -45,15 +45,14 @@ public sealed class BiddingReadyCompletedHandler : IDomainEventHandler<BiddingRe
                 return;
             }
 
-            // 2. Avvia il timer per il bidding (30 secondi di default)
-            const int biddingDurationSeconds = 30;
-            await _timerManager.StartBiddingTimerAsync(@event.SessionId, biddingDurationSeconds);
+            // 2. Avvia il timer per il bidding usando i secondi dall'evento
+            await _timerManager.StartBiddingTimerAsync(@event.SessionId, @event.TimerSeconds);
 
             // 3. Notifica tutti i client che il bidding è iniziato
-            await _notificationService.BiddingPhaseStarted(@event.SessionId, biddingInfo, biddingDurationSeconds);
+            await _notificationService.BiddingPhaseStarted(@event.SessionId, biddingInfo, @event.TimerSeconds);
 
             _logger.LogInformation("Successfully started bidding phase for session {SessionId} with {Duration}s timer", 
-                @event.SessionId, biddingDurationSeconds);
+                @event.SessionId, @event.TimerSeconds);
         }
         catch (Exception ex)
         {

@@ -16,4 +16,6 @@ public record LeagueListItemDto(
 public interface ILeagueQueries
 {
     Task<IReadOnlyList<LeagueListItemDto>> GetLeaguesAsync(CancellationToken ct = default);
+    Task<int> GetBiddingBaseSecondsAsync(Guid leagueId, CancellationToken ct = default);
+    Task<int> GetBiddingBaseSecondsBySessionAsync(Guid sessionId, CancellationToken ct = default);
 }

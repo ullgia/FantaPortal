@@ -48,8 +48,6 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
             CurrentSerieAPlayerId: auction.CurrentSerieAPlayerId != 0 ? auction.CurrentSerieAPlayerId : null,
             IsBiddingActive: auction.IsBiddingActive,
             IsReadyCheckActive: auction.CurrentReadyState != null && !auction.CurrentReadyState.IsCompleted,
-            BasePrice: auction.BasePrice,
-            MinIncrement: auction.MinIncrement,
             CurrentBids: currentBids,
             ReadyStates: auction.ReadyStates.SelectMany(rs => 
                 rs.EligibleTeamIds.Select(teamId => new ReadyStateDto(
@@ -141,22 +139,22 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
                 .Where(at => at.SessionId == auction.Id && 
                            at.Status == AuctionTurnStatus.Bidding)
                 .Select(at => at.Id)
-                .Contains(b.TurnId))
+                .Contains(b.AuctionTurnId))
             .OrderByDescending(b => b.Amount)
-            .ThenBy(b => b.PlacedAt)
+            .ThenBy(b => b.Timestamp)
             .ToListAsync(ct);
 
         // Recupero i nomi dei team per le bid
-        var teamIds = currentTurnBids.Select(b => b.TeamId).Distinct().ToList();
+        var teamIds = currentTurnBids.Select(b => b.LeaguePlayerId).Distinct().ToList();
         var teams = await _db.LeaguePlayers
             .Where(t => teamIds.Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
 
         return currentTurnBids.Select(bid => new BidDto(
-            TeamId: bid.TeamId,
-            TeamName: teams.GetValueOrDefault(bid.TeamId, "Unknown"),
+            TeamId: bid.LeaguePlayerId,
+            TeamName: teams.GetValueOrDefault(bid.LeaguePlayerId, "Unknown"),
             Amount: bid.Amount,
-            PlacedAt: bid.PlacedAt
+            PlacedAt: bid.Timestamp
         )).ToList();
     }
 

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Services;
 using Domain.Entities;
+using Domain.Services;
 using Domain.ValueObjects;
 using Infrastructure.Peristance;
 using Microsoft.EntityFrameworkCore;
@@ -112,7 +113,7 @@ public sealed class AuctionCommands(ApplicationDbContext db) : IAuctionCommands
         }
     }
 
-    public async Task PlaceBidAsync(Guid auctionId, Guid teamId, decimal amount, CancellationToken ct = default)
+    public async Task PlaceBidAsync(Guid auctionId, Guid teamId, int amount,ITimerCalculationServiceFactory factory, CancellationToken ct = default)
     {
         try
         {
@@ -124,7 +125,7 @@ public sealed class AuctionCommands(ApplicationDbContext db) : IAuctionCommands
             if (league?.ActiveAuction == null)
                 throw new InvalidOperationException("Auction not found");
 
-            league.PlaceBid(teamId, (int)amount);
+            league.PlaceBid(teamId, amount, factory);
             
             _db.Update(league);
             await _db.SaveChangesAsync(ct);
@@ -161,7 +162,7 @@ public sealed class AuctionCommands(ApplicationDbContext db) : IAuctionCommands
         }
     }
 
-    public async Task<CommandResult> StartAuctionAsync(Guid leagueId, int basePrice = 1, int minIncrement = 1, IReadOnlyList<Guid>? customOrder = null, CancellationToken ct = default)
+    public async Task<CommandResult> StartAuctionAsync(Guid leagueId, CancellationToken ct = default)
     {
         try
         {
@@ -172,7 +173,7 @@ public sealed class AuctionCommands(ApplicationDbContext db) : IAuctionCommands
                 .FirstOrDefaultAsync(l => l.Id == leagueId, ct)
                 ?? throw new InvalidOperationException("League not found");
 
-            league.StartAuction(basePrice, minIncrement, customOrder);
+            league.StartAuction();
 
             _db.Update(league);
             await _db.SaveChangesAsync(ct);

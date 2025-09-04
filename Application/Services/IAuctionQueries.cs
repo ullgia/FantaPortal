@@ -16,8 +16,6 @@ public record AuctionStateDto(
     int? CurrentSerieAPlayerId,
     bool IsBiddingActive,
     bool IsReadyCheckActive,
-    int BasePrice,
-    int MinIncrement,
     IReadOnlyList<BidDto> CurrentBids,
     IReadOnlyList<ReadyStateDto> ReadyStates
 );
