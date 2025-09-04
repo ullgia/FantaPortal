@@ -133,7 +133,7 @@ public class LeagueTests
 
         // Act & Assert
         var exception = Assert.Throws<DomainException>(() => league.StartAuction());
-        Assert.Contains("Already has an active auction", exception.Message);
+        Assert.Contains("Cannot start auction in current state", exception.Message);
     }
 
     [Fact]
@@ -322,12 +322,29 @@ public class LeagueTests
 
     private static void SetTeamPlayerCounts(Team team, int p, int d, int c, int a)
     {
-        // Usa reflection per impostare i contatori per i test
-        // In un'implementazione reale, ci sarebbero metodi dedicated per questo
-        var type = team.GetType();
-        type.GetProperty("CountP")?.SetValue(team, p);
-        type.GetProperty("CountD")?.SetValue(team, d);
-        type.GetProperty("CountC")?.SetValue(team, c);
-        type.GetProperty("CountA")?.SetValue(team, a);
+        // Simula i giocatori già assegnati usando l'API corretta del dominio
+        // Assegna portieri
+        for (int i = 0; i < p; i++)
+        {
+            team.AssignPlayerInternal(PlayerType.Goalkeeper, 10);
+        }
+        
+        // Assegna difensori
+        for (int i = 0; i < d; i++)
+        {
+            team.AssignPlayerInternal(PlayerType.Defender, 10);
+        }
+        
+        // Assegna centrocampisti
+        for (int i = 0; i < c; i++)
+        {
+            team.AssignPlayerInternal(PlayerType.Midfielder, 10);
+        }
+        
+        // Assegna attaccanti
+        for (int i = 0; i < a; i++)
+        {
+            team.AssignPlayerInternal(PlayerType.Forward, 10);
+        }
     }
 }

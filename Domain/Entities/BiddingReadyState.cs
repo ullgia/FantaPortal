@@ -47,7 +47,7 @@ public sealed class BiddingReadyState : BaseEntity<Guid>
     /// <summary>
     /// Tutti i team hanno confermato ready
     /// </summary>
-    public bool AllTeamsReady => !IsCompleted && EligibleTeamIds.All(id => _readyTeamIds.Contains(id));
+    public bool AllTeamsReady => EligibleTeamIds.All(id => _readyTeamIds.Contains(id));
 
     // EF Core constructor
     private BiddingReadyState() { }

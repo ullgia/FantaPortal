@@ -200,7 +200,8 @@ public class AuctionSession : AggregateRoot
     /// </summary>
     internal BiddingInfo StartBiddingAfterReady()
     {
-        var readyState = CurrentReadyState;
+        // Prende l'ultimo ready state (che dovrebbe essere completato)
+        var readyState = _readyStates.LastOrDefault();
         if (readyState == null || !readyState.IsCompleted)
         {
             throw new DomainException("Ready check not completed");
