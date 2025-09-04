@@ -257,10 +257,11 @@
     }
 
     // Event handlers per componenti
-    private async Task OnPlayerNominated(SerieAPlayer player)
+    private Task OnPlayerNominated(SerieAPlayer player)
     {
         nominatedPlayer = player;
         // La fase cambierà tramite SignalR
+        return Task.CompletedTask;
     }
 
     private async Task OnReadyStateChanged()
@@ -269,9 +270,10 @@
         await LoadAuctionState();
     }
 
-    private async Task OnBidPlaced(decimal amount)
+    private Task OnBidPlaced(decimal amount)
     {
         // L'aggiornamento arriverà tramite SignalR
+        return Task.CompletedTask;
     }
 
     // Nuovi handlers ottimizzati per SignalR con DTO completi

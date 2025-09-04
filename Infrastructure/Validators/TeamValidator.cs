@@ -1,6 +1,6 @@
 using Domain.Contracts;
+using Infrastructure.Peristance;
 using Microsoft.EntityFrameworkCore;
-using Portal.Data;
 
 namespace Infrastructure.Validators;
 

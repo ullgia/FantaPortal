@@ -10,7 +10,7 @@ namespace Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             // Timer services
-            services.AddSingleton<Application.Services.IAuctionTimerManager, Application.Services.AuctionTimerManager>();
+            services.AddScoped<Application.Services.IAuctionTimerManager, Application.Services.AuctionTimerManager>();
             services.AddScoped<Application.Services.AuctionTimerService>();
             
             // Domain events

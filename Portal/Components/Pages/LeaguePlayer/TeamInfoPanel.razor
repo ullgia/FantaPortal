@@ -51,7 +51,6 @@
 
     private TeamSummaryDto? teamInfo;
     private int maxPlayers = 25; // TODO: Da configurazione
-    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,7 +70,6 @@
         if (TeamId == Guid.Empty || LeagueId == Guid.Empty)
             return;
 
-        isLoading = true;
         try
         {
             var teams = await AuctionQueries.GetTeamsSummaryAsync(LeagueId);
@@ -81,10 +79,6 @@
         {
             Console.WriteLine($"Errore caricamento team: {ex.Message}");
             teamInfo = null;
-        }
-        finally
-        {
-            isLoading = false;
         }
     }
 

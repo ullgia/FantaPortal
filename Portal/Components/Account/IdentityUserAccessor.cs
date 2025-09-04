@@ -1,6 +1,5 @@
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
-using Portal.Data;
 
 namespace Portal.Components.Account
 {

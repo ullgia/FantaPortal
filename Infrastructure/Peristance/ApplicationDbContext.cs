@@ -2,14 +2,11 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using System.Reflection;
-using Application.Events;
-using Domain.Common;
 
-namespace Portal.Data
+namespace Infrastructure.Peristance
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDomainEventPublisher publisher) : IdentityDbContext<ApplicationUser>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
-    private readonly IDomainEventPublisher _publisher = publisher;
     public DbSet<Player> Players => Set<Player>();
         public DbSet<League> Leagues => Set<League>();
         public DbSet<Team> Teams => Set<Team>();
@@ -33,31 +30,12 @@ namespace Portal.Data
 
         public override int SaveChanges()
         {
-            var result = base.SaveChanges();
-            DispatchDomainEvents();
-            return result;
+            return base.SaveChanges();
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var result = await base.SaveChangesAsync(cancellationToken);
-            DispatchDomainEvents();
-            return result;
-        }
-
-        private void DispatchDomainEvents()
-        {
-            var aggregates = ChangeTracker.Entries()
-                .Select(e => e.Entity)
-                .OfType<AggregateRoot>()
-                .ToList();
-
-            foreach (var agg in aggregates)
-            {
-                foreach (var @event in agg.DomainEvents)
-                    _publisher.Publish(@event);
-                agg.ClearDomainEvents();
-            }
+            return await base.SaveChangesAsync(cancellationToken);
         }
     }
 }

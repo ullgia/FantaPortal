@@ -278,7 +278,7 @@
         }
     }
 
-    private async Task FilterPlayersDebounced()
+    private Task FilterPlayersDebounced()
     {
         _debounceTimer?.Dispose();
         _debounceTimer = new Timer(async _ => {
@@ -287,6 +287,7 @@
                 StateHasChanged();
             });
         }, null, 300, Timeout.Infinite);
+        return Task.CompletedTask;
     }
 
     private async Task FilterPlayers()

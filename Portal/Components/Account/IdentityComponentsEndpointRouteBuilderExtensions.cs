@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Portal.Components.Account.Pages;
 using Portal.Components.Account.Pages.Manage;
-using Portal.Data;
 
 namespace Microsoft.AspNetCore.Routing
 {

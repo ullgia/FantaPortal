@@ -1,7 +1,7 @@
 using Application.Services;
 using Domain.Entities;
+using Infrastructure.Peristance;
 using Microsoft.EntityFrameworkCore;
-using Portal.Data;
 
 namespace Infrastructure.Services;
 

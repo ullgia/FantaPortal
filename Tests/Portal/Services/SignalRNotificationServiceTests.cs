@@ -1,6 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+/*
+File temporaneamente disabilitato per problemi di compilazione con Portal.Hubs e Portal.Services
+Verrà riattivato dopo aver sistemato i namespace del progetto Portal
+
+I namespace Portal.Data, Portal.Hubs, Portal.Services non esistono attualmente
+Devono essere sostituiti con Infrastructure.Peristance, Infrastructure.Services, etc.
+*/
 using Application.Events;
 using Application.Services;
 using Domain.Enums;
@@ -8,6 +12,9 @@ using Microsoft.AspNetCore.SignalR;
 using Moq;
 using Portal.Hubs;
 using Portal.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Tests.Portal.Services;

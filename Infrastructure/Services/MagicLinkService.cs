@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Exceptions;
-using Portal.Data;
+using Infrastructure.Peristance;
 
 namespace Infrastructure.Services;
 

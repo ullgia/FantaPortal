@@ -1,0 +1,195 @@
+@page "/guest/dashboard"
+@attribute [Authorize(Roles = "LeagueGuest")]
+
+<PageTitle>Dashboard Ospite</PageTitle>
+
+<RadzenRow Gap="2rem" Class="rz-p-4">
+    <RadzenColumn Size="12">
+        <RadzenCard>
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H3" TagName="TagName.H1">
+                    👀 Dashboard Ospite
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-color-secondary">
+                    Osserva lo stato della lega e le aste in tempo reale
+                </RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Stato della Lega -->
+<RadzenRow Gap="2rem" Class="rz-p-4">
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenCard>
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H5">
+                    🏆 Stato Lega
+                </RadzenText>
+                
+                @if (leagueInfo != null)
+                {
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Nome:</strong> @leagueInfo.Name
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Partecipanti:</strong> @leagueInfo.ParticipantCount
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Budget per squadra:</strong> @leagueInfo.Budget crediti
+                    </RadzenText>
+                }
+                else
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenCard>
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H5">
+                    ⚽ Asta Corrente
+                </RadzenText>
+                
+                @if (currentAuction != null)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true">
+                        <RadzenText>
+                            <strong>Asta in corso:</strong> @currentAuction.Type
+                        </RadzenText>
+                    </RadzenAlert>
+                    
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Fase:</strong> @currentAuction.Phase
+                    </RadzenText>
+                    
+                    @if (!string.IsNullOrEmpty(currentAuction.CurrentPlayer))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            <strong>Giocatore corrente:</strong> @currentAuction.CurrentPlayer
+                        </RadzenText>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(currentAuction.CurrentNominator))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            <strong>Nomina:</strong> @currentAuction.CurrentNominator
+                        </RadzenText>
+                    }
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                        <RadzenText>Nessuna asta attiva al momento</RadzenText>
+                    </RadzenAlert>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+<!-- Assegnazioni Squadre -->
+<RadzenRow Gap="2rem" Class="rz-p-4">
+    <RadzenColumn Size="12">
+        <RadzenCard>
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H5">
+                    👥 Squadre e Assegnazioni
+                </RadzenText>
+                
+                @if (teams == null)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (!teams.Any())
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+                        <RadzenText>Nessuna squadra ancora configurata</RadzenText>
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@teams" TItem="TeamInfo" AllowPaging="true" PageSize="10">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="TeamInfo" Property="Name" Title="Squadra" />
+                            <RadzenDataGridColumn TItem="TeamInfo" Property="Owner" Title="Proprietario" />
+                            <RadzenDataGridColumn TItem="TeamInfo" Property="PlayersCount" Title="Giocatori" />
+                            <RadzenDataGridColumn TItem="TeamInfo" Property="SpentBudget" Title="Budget Speso" FormatString="{0:C0}" />
+                            <RadzenDataGridColumn TItem="TeamInfo" Property="RemainingBudget" Title="Budget Residuo" FormatString="{0:C0}" />
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
+
+@code {
+    [Inject] NavigationManager Navigation { get; set; } = default!;
+    
+    private LeagueInfo? leagueInfo;
+    private AuctionInfo? currentAuction;
+    private List<TeamInfo>? teams;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        // TODO: Implementare chiamate ai servizi reali
+        await Task.Delay(1000); // Simulazione caricamento
+        
+        // Dati simulati - sostituire con chiamate reali
+        leagueInfo = new LeagueInfo
+        {
+            Name = "Lega Champions 2024",
+            ParticipantCount = 10,
+            Budget = 500
+        };
+
+        currentAuction = new AuctionInfo
+        {
+            Type = "Assegnazione Iniziale",
+            Phase = "Nominazione Portieri",
+            CurrentPlayer = "Gianluigi Donnarumma",
+            CurrentNominator = "Mario Rossi"
+        };
+
+        teams = new List<TeamInfo>
+        {
+            new() { Name = "Team Alpha", Owner = "Mario Rossi", PlayersCount = 3, SpentBudget = 150, RemainingBudget = 350 },
+            new() { Name = "Team Beta", Owner = "Luigi Verdi", PlayersCount = 2, SpentBudget = 80, RemainingBudget = 420 },
+            new() { Name = "Team Gamma", Owner = "Paolo Bianchi", PlayersCount = 4, SpentBudget = 200, RemainingBudget = 300 }
+        };
+    }
+
+    // Classi temporanee - sostituire con quelle del Domain
+    private class LeagueInfo
+    {
+        public string Name { get; set; } = "";
+        public int ParticipantCount { get; set; }
+        public decimal Budget { get; set; }
+    }
+
+    private class AuctionInfo
+    {
+        public string Type { get; set; } = "";
+        public string Phase { get; set; } = "";
+        public string CurrentPlayer { get; set; } = "";
+        public string CurrentNominator { get; set; } = "";
+    }
+
+    private class TeamInfo
+    {
+        public string Name { get; set; } = "";
+        public string Owner { get; set; } = "";
+        public int PlayersCount { get; set; }
+        public decimal SpentBudget { get; set; }
+        public decimal RemainingBudget { get; set; }
+    }
+}
