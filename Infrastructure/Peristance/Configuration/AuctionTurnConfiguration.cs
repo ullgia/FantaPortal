@@ -10,6 +10,8 @@ public class AuctionTurnConfiguration : IEntityTypeConfiguration<AuctionTurn>
     {
         b.HasKey(t => t.Id);
         b.HasOne<AuctionSession>().WithMany().HasForeignKey(t => t.SessionId);
-        b.HasOne<Player>().WithMany().HasForeignKey(t => t.PlayerId);
+
+        b.HasOne(p => p.Player).WithMany().HasForeignKey(p => p.PlayerId);
+
     }
 }

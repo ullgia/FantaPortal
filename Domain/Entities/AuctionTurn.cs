@@ -8,6 +8,7 @@ public class AuctionTurn : BaseEntity
 {
     public Guid SessionId { get; private set; }
     public Guid PlayerId { get; private set; }
+    public virtual LeaguePlayer Player { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public AuctionTurnStatus Status { get; private set; } = AuctionTurnStatus.Nomination;
     public bool IsTimerActive { get; private set; }

@@ -17,7 +17,7 @@ public class BidIncrementEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -46,7 +46,7 @@ public class BidIncrementEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -80,7 +80,7 @@ public class BidIncrementEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -113,7 +113,7 @@ public class BidIncrementEdgeCaseTest
         Assert.Equal(AuctionStatus.Running, auction.Status);
     }
 
-    private void CompleteReadyCheck(League league, List<Team> teams)
+    private void CompleteReadyCheck(League league, List<LeaguePlayer> teams)
     {
         var auction = league.ActiveAuction!;
         var readyState = auction.CurrentReadyState!;

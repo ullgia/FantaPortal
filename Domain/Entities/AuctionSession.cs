@@ -154,7 +154,7 @@ public class AuctionSession : AggregateRoot
     }
 
     // Temporary method for backward compatibility with tests  
-    internal NominationResult Nominate(IReadOnlyList<Guid> teamOrder, IReadOnlyDictionary<Guid, Team> teams, Guid nominatorId, SerieAPlayer player)
+    internal NominationResult Nominate(IReadOnlyList<Guid> teamOrder, IReadOnlyDictionary<Guid, LeaguePlayer> teams, Guid nominatorId, SerieAPlayer player)
     {
         // Ricostruisce l'ordine dei turni
         _turnOrders.Clear();
@@ -173,7 +173,7 @@ public class AuctionSession : AggregateRoot
     /// Processa nomination delegata da League
     /// Responsabilità: logica auto-assign vs bidding, calcolo eligibili
     /// </summary>
-    internal NominationResult ProcessNomination(Guid nominatorTeamId, SerieAPlayer player, IReadOnlyDictionary<Guid, Team> teams)
+    internal NominationResult ProcessNomination(Guid nominatorTeamId, SerieAPlayer player, IReadOnlyDictionary<Guid, LeaguePlayer> teams)
     {
         if (Status != AuctionStatus.Running) throw new DomainException("Auction not running");
 
@@ -220,7 +220,7 @@ public class AuctionSession : AggregateRoot
     /// Avanza al prossimo turno
     /// Responsabilità: calcolo prossimo team/ruolo, aggiornamento stato
     /// </summary>
-    internal TurnInfo AdvanceToNextTurn(IReadOnlyDictionary<Guid, Team> teams)
+    internal TurnInfo AdvanceToNextTurn(IReadOnlyDictionary<Guid, LeaguePlayer> teams)
     {
         var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(
             TeamOrder, teams, CurrentRole, CurrentOrderIndex);
@@ -241,7 +241,7 @@ public class AuctionSession : AggregateRoot
     /// <summary>
     /// Forza avanzamento (timeout/admin)
     /// </summary>
-    internal TurnInfo ForceAdvance(IReadOnlyDictionary<Guid, Team> teams)
+    internal TurnInfo ForceAdvance(IReadOnlyDictionary<Guid, LeaguePlayer> teams)
     {
         _currentBidding = BiddingState.Empty;
         return AdvanceToNextTurn(teams);
@@ -274,7 +274,7 @@ public class AuctionSession : AggregateRoot
     /// <summary>
     /// Finalizza bidding e avanza
     /// </summary>
-    internal TurnInfo FinalizeBidding(IReadOnlyDictionary<Guid, Team> teams)
+    internal TurnInfo FinalizeBidding(IReadOnlyDictionary<Guid, LeaguePlayer> teams)
     {
         if (!_currentBidding.IsActive) throw new DomainException("No bidding to finalize");
         

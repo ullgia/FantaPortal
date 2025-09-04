@@ -320,7 +320,7 @@ public class LeagueTests
         Assert.DoesNotContain(team2, eligibleTeams);
     }
 
-    private static void SetTeamPlayerCounts(Team team, int p, int d, int c, int a)
+    private static void SetTeamPlayerCounts(LeaguePlayer team, int p, int d, int c, int a)
     {
         // Simula i giocatori già assegnati usando l'API corretta del dominio
         // Assegna portieri

@@ -1,5 +1,7 @@
 @page "/master/leagues"
 @attribute [Authorize(Roles = "Master")]
+@using Application.Services
+@inject ILeagueQueries LeagueQueries
 
 <PageTitle>Gestione Leghe - Master</PageTitle>
 
@@ -50,19 +52,37 @@
                 }
                 else
                 {
-                    <RadzenDataGrid Data="@leagues" TItem="League" AllowFiltering="true" AllowPaging="true" PageSize="10">
+                    <RadzenDataGrid Data="@leagues" TItem="LeagueListItemDto" AllowFiltering="true" AllowPaging="true" PageSize="10">
                         <Columns>
-                            <RadzenDataGridColumn TItem="League" Property="Name" Title="Nome Lega" />
-                            <RadzenDataGridColumn TItem="League" Property="ParticipantCount" Title="Partecipanti" />
-                            <RadzenDataGridColumn TItem="League" Property="Budget" Title="Budget" />
-                            <RadzenDataGridColumn TItem="League" Property="CreatedAt" Title="Creata il" FormatString="{0:dd/MM/yyyy}" />
-                            <RadzenDataGridColumn TItem="League" Title="Azioni" Sortable="false" Filterable="false">
+                            <RadzenDataGridColumn TItem="LeagueListItemDto" Property="Name" Title="Nome Lega" />
+                            <RadzenDataGridColumn TItem="LeagueListItemDto" Property="TeamsCount" Title="Squadre" />
+                            <RadzenDataGridColumn TItem="LeagueListItemDto" Property="HasActiveAuction" Title="Asta Attiva">
+                                <Template Context="l">
+                                    @if (l.HasActiveAuction)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="SI" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="NO" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="LeagueListItemDto" Title="Asta Stato">
+                                <Template Context="l">
+                                    @if (l.HasActiveAuction)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@l.ActiveAuctionStatus" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="LeagueListItemDto" Title="Azioni" Sortable="false" Filterable="false">
                                 <Template Context="league">
                                     <RadzenButton Icon="settings" 
-                                                ButtonStyle="ButtonStyle.Primary" 
-                                                Size="ButtonSize.Small"
-                                                Text="Gestisci"
-                                                Click="@(() => NavigateToLeague(league.Id))" />
+                                                  ButtonStyle="ButtonStyle.Primary" 
+                                                  Size="ButtonSize.Small"
+                                                  Text="Gestisci"
+                                                  Click="@(() => NavigateToLeague(league.Id))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
@@ -76,7 +96,7 @@
 @code {
     [Inject] NavigationManager Navigation { get; set; } = default!;
     
-    private List<League>? leagues;
+    private List<LeagueListItemDto>? leagues;
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,9 +105,7 @@
 
     private async Task LoadLeagues()
     {
-        // TODO: Implementare chiamata al servizio per caricare le leghe
-        await Task.Delay(1000); // Simulazione caricamento
-        leagues = new List<League>(); // Placeholder
+    leagues = (await LeagueQueries.GetLeaguesAsync()).ToList();
     }
 
     private void CreateNewLeague()
@@ -100,13 +118,5 @@
         Navigation.NavigateTo($"/master/leagues/{leagueId}");
     }
 
-    // Classe temporanea, sostituire con quella del Domain
-    private class League
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = "";
-        public int ParticipantCount { get; set; }
-        public decimal Budget { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+    
 }

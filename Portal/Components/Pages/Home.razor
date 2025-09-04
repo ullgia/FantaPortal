@@ -1,7 +1,48 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject Portal.Auth.IMagicGrantAccessor GrantAccessor
+@using Application.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 
-<PageTitle>Home</PageTitle>
+<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="margin:2rem;" />
 
-<h1>Hello, world!</h1>
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Navigation.NavigateTo("/Account/Login", true);
+            return;
+        }
 
-Welcome to your new app.
+        var grant = GrantAccessor.Current;
+
+        // Master users ignore magic grant and go to leagues dashboard
+        if (user.IsInRole("Master"))
+        {
+            Navigation.NavigateTo("/master/leagues", true);
+            return;
+        }
+
+        if (grant is null)
+        {
+            // No context grant: send to account management (or could show an info page)
+            Navigation.NavigateTo("/Account/Manage", true);
+            return;
+        }
+
+        if (grant.IsGuest)
+        {
+            Navigation.NavigateTo($"/guest/league/{grant.LeagueId}", true);
+            return;
+        }
+
+        // Player flow
+        Navigation.NavigateTo($"/player/league/{grant.LeagueId}", true);
+    }
+}

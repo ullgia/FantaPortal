@@ -10,10 +10,10 @@ namespace Tests.Domain;
 
 public class AuctionFlowTests
 {
-    private static Team CreateTeamWithSlots(PlayerType role, int availableSlots)
+    private static LeaguePlayer CreateTeamWithSlots(PlayerType role, int availableSlots)
     {
         var leagueId = Guid.NewGuid(); // ID della lega
-        var team = Team.CreateInternal(leagueId, $"TestTeam", 5000);
+        var team = LeaguePlayer.CreateInternal(leagueId, $"TestTeam", 5000);
         
         Console.WriteLine($"=== DEBUG CreateTeamWithSlots for {role}, want {availableSlots} available ===");
         Console.WriteLine($"Team initial: Budget={team.Budget}");
@@ -161,7 +161,7 @@ public class AuctionFlowTests
         
         var teamOrder = new List<Guid> { team1.Id, team2.Id, team3.Id };
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 },
@@ -186,7 +186,7 @@ public class AuctionFlowTests
         
         var teamOrder = new List<Guid> { team1.Id, team2.Id, team3.Id };
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 },
@@ -216,7 +216,7 @@ public class AuctionFlowTests
         
         var teamOrder = new List<Guid> { team1.Id, team2.Id };
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 }
@@ -248,7 +248,7 @@ public class AuctionFlowTests
         
         var teamOrder = new List<Guid> { team1.Id, team2.Id };
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 }
@@ -267,7 +267,7 @@ public class AuctionFlowTests
     {
         // Arrange & Test progression P -> D -> C -> A
         var teamOrder = new List<Guid>();
-        var teams = new Dictionary<Guid, Team>();
+        var teams = new Dictionary<Guid, LeaguePlayer>();
         
         // Slot available for D only
         var team1 = CreateTeamWithSlots(PlayerType.Defender, 1);
@@ -319,7 +319,7 @@ public class AuctionFlowTests
         
         var teamOrder = new List<Guid> { team1.Id, team2.Id, team3.Id, team4.Id };
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 },

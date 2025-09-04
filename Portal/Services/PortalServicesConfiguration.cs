@@ -24,6 +24,7 @@ public static class PortalServicesConfiguration
 
         // Magic link validator (replace with real implementation later)
         services.AddSingleton<IMagicLinkValidator, InMemoryMagicLinkValidator>();
+    services.AddScoped<IMagicGrantAccessor, MagicGrantAccessor>();
         
         // HTTP context accessor
         services.AddHttpContextAccessor();

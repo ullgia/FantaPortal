@@ -8,8 +8,27 @@
 @inject IAuctionCommands AuctionCommands
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject Portal.Auth.IMagicGrantAccessor GrantAccessor
 @attribute [Authorize]
 @implements IAsyncDisposable
+
+<style>
+    .player-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .player-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .player-card.selected {
+        border: 2px solid #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+</style>
+
 
 <PageTitle>Asta - @leagueName</PageTitle>
 
@@ -63,7 +82,7 @@
                 <TeamInfoPanel TeamId="@currentTeamId" />
                 
                 <!-- Pannello Ordine Turni -->
-                <TurnOrderPanel @ref="turnOrderPanel" LeagueId="@AuctionId" />
+                <TurnOrderPanel @ref="turnOrderPanel" LeagueId="@LeagueId" />
             </RadzenColumn>
         </RadzenRow>
     }
@@ -83,8 +102,8 @@
 </RadzenStack>
 
 @code {
-    [Parameter] public Guid AuctionId { get; set; }
-    
+    [Parameter] public Guid LeagueId { get; set; }
+    private Guid AuctionId {get;set;}
     private HubConnection? hubConnection;
     private string leagueName = "Caricamento...";
     private string auctionState = "Loading";
@@ -107,10 +126,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Carica stato iniziale
+        var grant = GrantAccessor.Current;
+        if (grant == null || grant.IsGuest)
+        {
+            Navigation.NavigateTo("/", true);
+            return;
+        }
         await LoadAuctionState();
-        
-        // Configura SignalR
         await InitializeSignalR();
     }
 
@@ -118,9 +140,11 @@
     {
         try
         {
-            var overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+            var currentGrant = GrantAccessor.Current;
+            var overview = await AuctionQueries.GetAuctionOverviewAsync(currentGrant!.LeagueId);
             if (overview != null)
             {
+                AuctionId = overview.AuctionId;
                 leagueName = overview.LeagueName;
                 auctionState = overview.Status.ToString();
                 currentTurn = overview.CurrentTurnPosition;
@@ -370,19 +394,3 @@
     }
 }
 
-<style>
-    .player-card {
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .player-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .player-card.selected {
-        border: 2px solid #667eea;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-    }
-</style>

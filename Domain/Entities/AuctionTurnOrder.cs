@@ -10,7 +10,7 @@ public class AuctionTurnOrder : BaseEntity
 
     // Navigation properties
     public AuctionSession AuctionSession { get; private set; } = null!;
-    public Team Team { get; private set; } = null!;
+    public LeaguePlayer Team { get; private set; } = null!;
 
     private AuctionTurnOrder() { }
 

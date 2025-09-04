@@ -18,7 +18,7 @@ public class PlayerOwnershipConfiguration : IEntityTypeConfiguration<PlayerOwner
         b.Property(o => o.IsActive).IsRequired();
         
         // Foreign key relationships (owned by League aggregate)
-        b.HasOne<Team>().WithMany().HasForeignKey(o => o.TeamId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<LeaguePlayer>().WithMany().HasForeignKey(o => o.TeamId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<SerieAPlayer>().WithMany().HasForeignKey(o => o.SerieAPlayerId).OnDelete(DeleteBehavior.Restrict);
         
         // Indexes

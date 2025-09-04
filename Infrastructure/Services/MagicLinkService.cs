@@ -45,7 +45,7 @@ public class MagicLinkService : IMagicLinkService
         var league = await db.Leagues.FindAsync(leagueId);
         if (league == null) throw new DomainException("League not found");
 
-        var team = await db.Teams.FindAsync(teamId);
+        var team = await db.LeaguePlayers.FindAsync(teamId);
         if (team == null || team.LeagueId != leagueId) 
             throw new DomainException("Team not found in this league");
 

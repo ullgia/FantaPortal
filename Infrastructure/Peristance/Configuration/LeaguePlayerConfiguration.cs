@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Peristance.Configuration;
 
-public class TeamConfiguration : IEntityTypeConfiguration<Team>
+public class LeaguePlayerConfiguration : IEntityTypeConfiguration<LeaguePlayer>
 {
-    public void Configure(EntityTypeBuilder<Team> b)
+    public void Configure(EntityTypeBuilder<LeaguePlayer> b)
     {
         b.HasKey(t => t.Id);
         b.Property(t => t.Name).HasMaxLength(100);

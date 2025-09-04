@@ -11,10 +11,10 @@ public class League : AggregateRoot
     public string Name { get; private set; } = string.Empty;
     
     // Collezioni interne
-    private readonly List<Team> _teams = new();
+    private readonly List<LeaguePlayer> _teams = new();
     private readonly List<PlayerOwnership> _playerOwnerships = new();
     
-    public IReadOnlyList<Team> Teams => _teams.AsReadOnly();
+    public IReadOnlyList<LeaguePlayer> Teams => _teams.AsReadOnly();
     public IReadOnlyList<PlayerOwnership> PlayerOwnerships => _playerOwnerships.AsReadOnly();
     
     // Una sola asta attiva per volta
@@ -30,7 +30,7 @@ public class League : AggregateRoot
 
     #region Team Management
 
-    public Team AddTeam(string teamName, int initialBudget)
+    public LeaguePlayer AddTeam(string teamName, int initialBudget)
     {
         if (string.IsNullOrWhiteSpace(teamName)) throw new DomainException("Team name required");
         if (initialBudget < 0) throw new DomainException("Initial budget must be non-negative");
@@ -39,19 +39,19 @@ public class League : AggregateRoot
         if (_teams.Any(t => t.Name.ToLowerInvariant() == normalizedName))
             throw new DomainException("Team name already exists in this league");
 
-        var team = Team.CreateInternal(Id, teamName.Trim(), initialBudget);
+        var team = LeaguePlayer.CreateInternal(Id, teamName.Trim(), initialBudget);
         _teams.Add(team);
         
         return team;
     }
 
-    public Team GetTeam(Guid teamId)
+    public LeaguePlayer GetTeam(Guid teamId)
     {
         return _teams.FirstOrDefault(t => t.Id == teamId) 
             ?? throw new DomainException("Team not found");
     }
 
-    public IReadOnlyList<Team> GetTeamsWithSlotForRole(PlayerType role)
+    public IReadOnlyList<LeaguePlayer> GetTeamsWithSlotForRole(PlayerType role)
     {
         return _teams.Where(t => t.HasSlot(role)).ToList();
     }

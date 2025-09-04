@@ -36,7 +36,7 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
 
         // Recupero i team per i nomi nei ready states
         var teamIds = auction.ReadyStates.SelectMany(rs => rs.EligibleTeamIds).ToList();
-        var teams = await _db.Teams
+        var teams = await _db.LeaguePlayers
             .Where(t => teamIds.Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
 
@@ -63,7 +63,7 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
 
     public async Task<IReadOnlyList<TeamSummaryDto>> GetTeamsSummaryAsync(Guid leagueId, CancellationToken ct = default)
     {
-        var teams = await _db.Teams
+        var teams = await _db.LeaguePlayers
             .Where(t => t.LeagueId == leagueId)
             .ToListAsync(ct);
 
@@ -148,7 +148,7 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
 
         // Recupero i nomi dei team per le bid
         var teamIds = currentTurnBids.Select(b => b.TeamId).Distinct().ToList();
-        var teams = await _db.Teams
+        var teams = await _db.LeaguePlayers
             .Where(t => teamIds.Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
 
@@ -171,7 +171,7 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
 
         // Recupero i team per i nomi
         var teamIds = auction.ReadyStates.SelectMany(rs => rs.EligibleTeamIds).ToList();
-        var teams = await _db.Teams
+        var teams = await _db.LeaguePlayers
             .Where(t => teamIds.Contains(t.Id))
             .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
 
@@ -187,7 +187,7 @@ public sealed class AuctionQueries(ApplicationDbContext db) : IAuctionQueries
     public async Task<IReadOnlyList<SerieAPlayer>> GetAvailablePlayersAsync(Guid leagueId, PlayerType role, CancellationToken ct = default)
     {
         // Recupero i giocatori già posseduti nella lega tramite i team della lega
-        var teamIds = await _db.Teams
+        var teamIds = await _db.LeaguePlayers
             .Where(t => t.LeagueId == leagueId)
             .Select(t => t.Id)
             .ToListAsync(ct);

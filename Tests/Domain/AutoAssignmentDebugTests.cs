@@ -11,9 +11,9 @@ namespace Tests.Domain;
 
 public class AutoAssignmentDebugTests
 {
-    private static Team CreateTeamWithSlots(Guid id, PlayerType role, int availableSlots)
+    private static LeaguePlayer CreateTeamWithSlots(Guid id, PlayerType role, int availableSlots)
     {
-        var team = Team.CreateInternal(id, $"Team {id}", 5000); // Usa l'ID richiesto!
+        var team = LeaguePlayer.CreateInternal(id, $"Team {id}", 5000); // Usa l'ID richiesto!
         
         // Simula l'uso di slot assegnando giocatori usando l'API pubblica
         var maxSlots = role switch

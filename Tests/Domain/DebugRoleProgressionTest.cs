@@ -9,10 +9,10 @@ namespace Tests.Domain
 {
     public class DebugRoleProgressionTest
     {
-        private static Team CreateTeamWithSlots(PlayerType role, int availableSlots)
+        private static LeaguePlayer CreateTeamWithSlots(PlayerType role, int availableSlots)
         {
             var leagueId = Guid.NewGuid();
-            var team = Team.CreateInternal(leagueId, $"TestTeam", 5000);
+            var team = LeaguePlayer.CreateInternal(leagueId, $"TestTeam", 5000);
             
             // Simula l'uso di slot assegnando giocatori usando l'API pubblica
             var maxSlots = role switch
@@ -64,7 +64,7 @@ namespace Tests.Domain
             Console.WriteLine($"Team1 Defender: AvailableD={availableD}, HasSlotD={hasSlotD}");
             
             var teamOrder = new List<Guid> { team1.Id };
-            var teams = new Dictionary<Guid, Team> { { team1.Id, team1 } };
+            var teams = new Dictionary<Guid, LeaguePlayer> { { team1.Id, team1 } };
 
             // Act
             var (nextRole, nextIndex) = AuctionFlow.AdvanceUntilEligible(teamOrder, teams, PlayerType.Goalkeeper, 0);

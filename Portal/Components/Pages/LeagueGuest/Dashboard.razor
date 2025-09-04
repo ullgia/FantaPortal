@@ -1,5 +1,8 @@
-@page "/guest/dashboard"
+@page "/guest/league/{leagueId:guid}"
 @attribute [Authorize(Roles = "LeagueGuest")]
+@using Application.Services
+@inject IAuctionQueries AuctionQueries
+@inject Portal.Auth.IMagicGrantAccessor GrantAccessor
 
 <PageTitle>Dashboard Ospite</PageTitle>
 
@@ -33,10 +36,10 @@
                         <strong>Nome:</strong> @leagueInfo.Name
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1">
-                        <strong>Partecipanti:</strong> @leagueInfo.ParticipantCount
+                        <strong>Squadre:</strong> @leagueInfo.Teams.Count
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1">
-                        <strong>Budget per squadra:</strong> @leagueInfo.Budget crediti
+                        <strong>Budget Totale:</strong> @leagueInfo.TotalBudget
                     </RadzenText>
                 }
                 else
@@ -58,27 +61,17 @@
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true">
                         <RadzenText>
-                            <strong>Asta in corso:</strong> @currentAuction.Type
+                            <strong>Asta in corso:</strong> @currentAuction.Status
                         </RadzenText>
                     </RadzenAlert>
                     
                     <RadzenText TextStyle="TextStyle.Body1">
-                        <strong>Fase:</strong> @currentAuction.Phase
+                        <strong>Turno:</strong> @currentAuction.CurrentTurnPosition / @currentAuction.TotalTeams
                     </RadzenText>
                     
-                    @if (!string.IsNullOrEmpty(currentAuction.CurrentPlayer))
-                    {
-                        <RadzenText TextStyle="TextStyle.Body1">
-                            <strong>Giocatore corrente:</strong> @currentAuction.CurrentPlayer
-                        </RadzenText>
-                    }
-                    
-                    @if (!string.IsNullOrEmpty(currentAuction.CurrentNominator))
-                    {
-                        <RadzenText TextStyle="TextStyle.Body1">
-                            <strong>Nomina:</strong> @currentAuction.CurrentNominator
-                        </RadzenText>
-                    }
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>Team di turno:</strong> @currentAuction.CurrentTurnTeamName
+                    </RadzenText>
                 }
                 else
                 {
@@ -112,13 +105,11 @@
                 }
                 else
                 {
-                    <RadzenDataGrid Data="@teams" TItem="TeamInfo" AllowPaging="true" PageSize="10">
+            <RadzenDataGrid Data="@teams" TItem="TeamSummaryDto" AllowPaging="true" PageSize="10">
                         <Columns>
-                            <RadzenDataGridColumn TItem="TeamInfo" Property="Name" Title="Squadra" />
-                            <RadzenDataGridColumn TItem="TeamInfo" Property="Owner" Title="Proprietario" />
-                            <RadzenDataGridColumn TItem="TeamInfo" Property="PlayersCount" Title="Giocatori" />
-                            <RadzenDataGridColumn TItem="TeamInfo" Property="SpentBudget" Title="Budget Speso" FormatString="{0:C0}" />
-                            <RadzenDataGridColumn TItem="TeamInfo" Property="RemainingBudget" Title="Budget Residuo" FormatString="{0:C0}" />
+                <RadzenDataGridColumn TItem="TeamSummaryDto" Property="Name" Title="Squadra" />
+                <RadzenDataGridColumn TItem="TeamSummaryDto" Property="PlayersCount" Title="Giocatori" />
+                <RadzenDataGridColumn TItem="TeamSummaryDto" Property="AvailableBudget" Title="Budget" />
                         </Columns>
                     </RadzenDataGrid>
                 }
@@ -130,66 +121,33 @@
 @code {
     [Inject] NavigationManager Navigation { get; set; } = default!;
     
-    private LeagueInfo? leagueInfo;
-    private AuctionInfo? currentAuction;
-    private List<TeamInfo>? teams;
+    [Parameter] public Guid LeagueId { get; set; }
+    private LeagueStatsDto? leagueInfo;
+    private AuctionOverviewDto? currentAuction;
+    private IReadOnlyList<TeamSummaryDto>? teams;
 
     protected override async Task OnInitializedAsync()
     {
+        var grant = GrantAccessor.Current;
+    if (grant == null || !grant.IsGuest || grant.LeagueId != LeagueId)
+        {
+            Navigation.NavigateTo("/", true);
+            return;
+        }
+        if (LeagueId == Guid.Empty)
+        {
+            return; // Mostra solo spinner / TODO messaggio
+        }
         await LoadDashboardData();
     }
 
     private async Task LoadDashboardData()
     {
         // TODO: Implementare chiamate ai servizi reali
-        await Task.Delay(1000); // Simulazione caricamento
-        
-        // Dati simulati - sostituire con chiamate reali
-        leagueInfo = new LeagueInfo
-        {
-            Name = "Lega Champions 2024",
-            ParticipantCount = 10,
-            Budget = 500
-        };
-
-        currentAuction = new AuctionInfo
-        {
-            Type = "Assegnazione Iniziale",
-            Phase = "Nominazione Portieri",
-            CurrentPlayer = "Gianluigi Donnarumma",
-            CurrentNominator = "Mario Rossi"
-        };
-
-        teams = new List<TeamInfo>
-        {
-            new() { Name = "Team Alpha", Owner = "Mario Rossi", PlayersCount = 3, SpentBudget = 150, RemainingBudget = 350 },
-            new() { Name = "Team Beta", Owner = "Luigi Verdi", PlayersCount = 2, SpentBudget = 80, RemainingBudget = 420 },
-            new() { Name = "Team Gamma", Owner = "Paolo Bianchi", PlayersCount = 4, SpentBudget = 200, RemainingBudget = 300 }
-        };
+    leagueInfo = await AuctionQueries.GetLeagueStatsAsync(LeagueId);
+    currentAuction = await AuctionQueries.GetAuctionOverviewAsync(LeagueId);
+    teams = await AuctionQueries.GetTeamsSummaryAsync(LeagueId);
     }
 
-    // Classi temporanee - sostituire con quelle del Domain
-    private class LeagueInfo
-    {
-        public string Name { get; set; } = "";
-        public int ParticipantCount { get; set; }
-        public decimal Budget { get; set; }
-    }
-
-    private class AuctionInfo
-    {
-        public string Type { get; set; } = "";
-        public string Phase { get; set; } = "";
-        public string CurrentPlayer { get; set; } = "";
-        public string CurrentNominator { get; set; } = "";
-    }
-
-    private class TeamInfo
-    {
-        public string Name { get; set; } = "";
-        public string Owner { get; set; } = "";
-        public int PlayersCount { get; set; }
-        public decimal SpentBudget { get; set; }
-        public decimal RemainingBudget { get; set; }
-    }
+    
 }

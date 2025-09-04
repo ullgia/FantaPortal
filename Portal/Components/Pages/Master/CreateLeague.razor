@@ -1,0 +1,34 @@
+@page "/master/leagues/create"
+@attribute [Authorize(Roles = "Master")]
+@using Application.Services
+@inject ILeagueCommands LeagueCommands
+@inject NavigationManager Navigation
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Crea Lega</PageTitle>
+
+<RadzenCard Style="max-width:500px;margin:2rem auto;">
+    <EditForm Model="this" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <RadzenFieldset Text="Nuova Lega">
+            <RadzenTextBox Name="leagueName" @bind-Value="leagueName" Style="width:100%" Placeholder="Nome lega" />
+            <RadzenRequiredValidator Component="leagueName" Text="Nome obbligatorio" />
+        </RadzenFieldset>
+        <RadzenButton ButtonType="ButtonType.Submit" Text="Crea" Icon="check" Style="margin-right:1rem" Disabled="@isSaving" />
+        <RadzenButton Text="Annulla" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/master/leagues"))" Disabled="@isSaving" />
+    </EditForm>
+</RadzenCard>
+
+@code {
+    private string leagueName = string.Empty;
+    private bool isSaving;
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(leagueName)) return;
+        isSaving = true;
+        var id = await LeagueCommands.CreateLeagueAsync(leagueName);
+        Navigation.NavigateTo($"/master/leagues/{id}");
+    }
+}

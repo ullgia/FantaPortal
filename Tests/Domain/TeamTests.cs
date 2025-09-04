@@ -19,7 +19,7 @@ public class TeamTests
         var initialBudget = 500;
 
         // Act
-        var team = Team.CreateInternal(leagueId, teamName, initialBudget);
+        var team = LeaguePlayer.CreateInternal(leagueId, teamName, initialBudget);
 
         // Assert
         Assert.Equal(leagueId, team.LeagueId);
@@ -39,7 +39,7 @@ public class TeamTests
     public void HasSlot_WithAvailableSlots_ShouldReturnTrue(PlayerType role, bool expected)
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
 
         // Act
         var hasSlot = team.HasSlot(role);
@@ -52,7 +52,7 @@ public class TeamTests
     public void GetAvailableSlots_WithNoAssignments_ShouldReturnMaxSlots()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
 
         // Act & Assert
         Assert.Equal(3, team.GetAvailableSlots(PlayerType.Goalkeeper));
@@ -65,7 +65,7 @@ public class TeamTests
     public void AssignPlayerInternal_WithValidData_ShouldUpdateBudgetAndCounts()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
         var price = 50;
 
         // Act
@@ -81,7 +81,7 @@ public class TeamTests
     public void AssignPlayerInternal_WithInsufficientBudget_ShouldThrowException()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 100);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 100);
         var price = 150; // Più del budget disponibile
 
         // Act & Assert
@@ -93,7 +93,7 @@ public class TeamTests
     public void AssignPlayerInternal_WithNoAvailableSlot_ShouldThrowException()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
         
         // Riempie tutti i slot per portieri
         team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
@@ -109,7 +109,7 @@ public class TeamTests
     public void ReleasePlayerInternal_ShouldRestoreBudgetAndDecrementCount()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
         team.AssignPlayerInternal(PlayerType.Defender, 75);
 
         // Verifica stato iniziale
@@ -129,7 +129,7 @@ public class TeamTests
     public void GetPlayerCounts_ShouldReturnCorrectCounts()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 500);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 500);
         team.AssignPlayerInternal(PlayerType.Goalkeeper, 50);
         team.AssignPlayerInternal(PlayerType.Defender, 30);
         team.AssignPlayerInternal(PlayerType.Defender, 40);
@@ -150,7 +150,7 @@ public class TeamTests
     public void MultipleOperations_ShouldMaintainConsistentState()
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 1000);
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 1000);
 
         // Act - Sequence di operazioni
         team.AssignPlayerInternal(PlayerType.Goalkeeper, 100);  // Budget: 900, P: 1
@@ -179,7 +179,7 @@ public class TeamTests
     public void FillAllSlots_ShouldReachMaxCapacity(PlayerType role, int maxSlots)
     {
         // Arrange
-        var team = Team.CreateInternal(Guid.NewGuid(), "Test Team", 5000); // Budget alto per non limitare
+        var team = LeaguePlayer.CreateInternal(Guid.NewGuid(), "Test Team", 5000); // Budget alto per non limitare
         
         // Act - Riempie tutti gli slot per il ruolo
         for (int i = 0; i < maxSlots; i++)

@@ -208,7 +208,7 @@ public class CompleteAuctionSimulationTests
         return players;
     }
 
-    private static bool AllTeamsCompleted(Team[] teams)
+    private static bool AllTeamsCompleted(LeaguePlayer[] teams)
     {
         return teams.All(t => 
             t.CountP >= 3 &&
@@ -217,7 +217,7 @@ public class CompleteAuctionSimulationTests
             t.CountA >= 6);
     }
 
-    private static SerieAPlayer ChoosePlayerToNominate(List<SerieAPlayer> availablePlayers, Team currentTeam, Team[] allTeams)
+    private static SerieAPlayer ChoosePlayerToNominate(List<SerieAPlayer> availablePlayers, LeaguePlayer currentTeam, LeaguePlayer[] allTeams)
     {
         // Strategia intelligente di nomina:
         // 1. Priorità ai ruoli dove il team ha ancora slot
@@ -273,7 +273,7 @@ public class CompleteAuctionSimulationTests
     }
 
     private static (Guid WinnerId, string WinnerName, int FinalPrice) SimulateBidding(
-        League league, Team[] teams, IReadOnlyList<Guid> eligibleTeamIds, SerieAPlayer player)
+        League league, LeaguePlayer[] teams, IReadOnlyList<Guid> eligibleTeamIds, SerieAPlayer player)
     {
         var biddingInfo = league.ActiveAuction.GetBiddingInfo();
         var currentPrice = biddingInfo.HighestBid;
@@ -315,7 +315,7 @@ public class CompleteAuctionSimulationTests
         return (currentWinner, winnerTeam.Name, currentPrice);
     }
 
-    private static void LogTeamStates(Team[] teams, List<string> auctionLog, string moment)
+    private static void LogTeamStates(LeaguePlayer[] teams, List<string> auctionLog, string moment)
     {
         var stateLog = $"{moment} - Budgets: {string.Join(", ", teams.Select(t => $"{t.Name}={t.Budget}"))}";
         stateLog += $" | Rosters: {string.Join(", ", teams.Select(t => $"{t.Name}[P:{t.CountP},D:{t.CountD},C:{t.CountC},A:{t.CountA}]"))}";
@@ -324,7 +324,7 @@ public class CompleteAuctionSimulationTests
         auctionLog.Add(stateLog);
     }
 
-    private static void LogFinalResults(Team[] teams, League league, List<string> auctionLog)
+    private static void LogFinalResults(LeaguePlayer[] teams, League league, List<string> auctionLog)
     {
         Console.WriteLine("Final team rosters:");
         foreach (var team in teams)
@@ -344,7 +344,7 @@ public class CompleteAuctionSimulationTests
         Console.WriteLine($"\nTotal auction log entries: {auctionLog.Count}");
     }
 
-    private static void VerifyAuctionIntegrity(League league, Team[] teams)
+    private static void VerifyAuctionIntegrity(League league, LeaguePlayer[] teams)
     {
         // Verifica che i budget siano coerenti
         foreach (var team in teams)
@@ -376,7 +376,7 @@ public class CompleteAuctionSimulationTests
         }
     }
 
-    private static void VerifyFinalAuctionResults(Team[] teams, League league)
+    private static void VerifyFinalAuctionResults(LeaguePlayer[] teams, League league)
     {
         // Verifica che tutti i vincoli finali siano rispettati
         var totalOwnerships = league.PlayerOwnerships.Count;

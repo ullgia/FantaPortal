@@ -9,7 +9,7 @@ using Domain.Enums;
 public static class AuctionFlow
 {
     public static (bool AutoAssign, IReadOnlyList<Guid> EligibleOthers) EvaluateNomination(
-        IEnumerable<Team> allTeams, 
+        IEnumerable<LeaguePlayer> allTeams, 
         Guid nominatorId, 
         PlayerType role)
     {
@@ -32,7 +32,7 @@ public static class AuctionFlow
 
     public static (PlayerType? NextRole, int NextIndex) AdvanceUntilEligible(
         IReadOnlyList<Guid> teamOrder,
-        IReadOnlyDictionary<Guid, Team> teams,
+        IReadOnlyDictionary<Guid, LeaguePlayer> teams,
         PlayerType currentRole,
         int currentIndex)
     {

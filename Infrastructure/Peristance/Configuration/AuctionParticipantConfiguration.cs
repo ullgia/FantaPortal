@@ -10,7 +10,7 @@ public class AuctionParticipantConfiguration : IEntityTypeConfiguration<AuctionP
     {
         b.HasKey(p => p.Id);
         b.HasOne<AuctionSession>().WithMany().HasForeignKey(p => p.SessionId);
-        b.HasOne<Team>().WithMany().HasForeignKey(p => p.TeamId);
+        b.HasOne<LeaguePlayer>().WithMany().HasForeignKey(p => p.TeamId);
         b.HasIndex(p => new { p.SessionId, p.OrderIndex }).IsUnique();
     }
 }

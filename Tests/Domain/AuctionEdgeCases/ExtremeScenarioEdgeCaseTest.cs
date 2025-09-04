@@ -16,7 +16,7 @@ public class ExtremeScenarioEdgeCaseTest
     {
         // Arrange - Tutti i team con budget minimo
         var league = League.Create("Minimum Budget League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -53,7 +53,7 @@ public class ExtremeScenarioEdgeCaseTest
     {
         // Arrange - Riempi quasi tutti i roster
         var league = League.Create("Nearly Full League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -91,7 +91,7 @@ public class ExtremeScenarioEdgeCaseTest
     {
         // Arrange - Budget molto alto
         var league = League.Create("High Budget League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -126,7 +126,7 @@ public class ExtremeScenarioEdgeCaseTest
         Assert.Equal(AuctionStatus.Running, auction.Status);
     }
 
-    private void CompleteReadyCheck(League league, List<Team> teams)
+    private void CompleteReadyCheck(League league, List<LeaguePlayer> teams)
     {
         var auction = league.ActiveAuction!;
         var readyState = auction.CurrentReadyState!;

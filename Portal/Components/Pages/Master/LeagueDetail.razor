@@ -1,0 +1,164 @@
+@page "/master/leagues/{leagueId:guid}"
+@attribute [Authorize(Roles = "Master")]
+@using Radzen
+@using Radzen.Blazor
+@using Application.Services
+@inject IAuctionQueries AuctionQueries
+@inject IAuctionCommands AuctionCommands
+@using Domain.Enums
+@inject NavigationManager Navigation
+
+<PageTitle>Dettaglio Lega</PageTitle>
+
+<RadzenStack Gap="1rem" Class="rz-p-3">
+    <RadzenButton Icon="arrow_back" Text="Indietro" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/master/leagues"))" />
+    <RadzenCard>
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H4">@leagueName</RadzenText>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"{teamCount} Squadre")" />
+                @if (auctionOverview != null)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@($"Asta: {auctionOverview.Status}")" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Nessuna Asta" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H5">Squadre</RadzenText>
+                    @if (teams == null)
+                    {
+                        <RadzenProgressBarCircular ShowValue="false" />
+                    }
+                    else
+                    {
+                        <RadzenDataGrid Data="@teams" TItem="TeamSummaryDto" PageSize="10" AllowPaging="true">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="TeamSummaryDto" Property="Name" Title="Nome" />
+                                <RadzenDataGridColumn TItem="TeamSummaryDto" Title="Budget">
+                                    <Template Context="t">@t.AvailableBudget</Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TeamSummaryDto" Title="Giocatori">
+                                    <Template Context="t">@t.PlayersCount</Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard>
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.H5">Asta Attiva</RadzenText>
+                    @if (auctionOverview == null)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">Nessuna asta attiva</RadzenAlert>
+                        <RadzenButton Text="Avvia Asta" Icon="play_arrow" ButtonStyle="ButtonStyle.Success" Click="StartAuction" Disabled="isProcessing" />
+                    }
+                    else
+                    {
+                        <RadzenStack>
+                            <RadzenText TextStyle="TextStyle.Body2">Turno: @auctionOverview.CurrentTurnPosition / @auctionOverview.TotalTeams</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">Ruolo: @auctionOverview.CurrentRole</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">Team di Turno: @auctionOverview.CurrentTurnTeamName</RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Text="Apri Vista" Icon="open_in_new" Click="OpenAuction" />
+                                @if (auctionOverview.Status == AuctionStatus.Running)
+                                {
+                                    <RadzenButton Text="Pausa" Icon="pause" ButtonStyle="ButtonStyle.Warning" Click="PauseAuction" Disabled="isProcessing" />
+                                }
+                                else if (auctionOverview.Status == AuctionStatus.Paused)
+                                {
+                                    <RadzenButton Text="Riprendi" Icon="play_arrow" ButtonStyle="ButtonStyle.Info" Click="ResumeAuction" Disabled="isProcessing" />
+                                }
+                                @if (auctionOverview.Status == AuctionStatus.Running || auctionOverview.Status == AuctionStatus.Paused)
+                                {
+                                    <RadzenButton Text="Completa" Icon="stop" ButtonStyle="ButtonStyle.Danger" Click="CompleteAuction" Disabled="isProcessing" />
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid LeagueId { get; set; }
+
+    private string leagueName = "Lega";
+    private int teamCount;
+    private AuctionOverviewDto? auctionOverview;
+    private bool isProcessing;
+    private IReadOnlyList<TeamSummaryDto>? teams;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        auctionOverview = await AuctionQueries.GetAuctionOverviewAsync(LeagueId);
+        if (auctionOverview != null)
+        {
+            leagueName = auctionOverview.LeagueName;
+        }
+        teams = await AuctionQueries.GetTeamsSummaryAsync(LeagueId);
+        teamCount = teams?.Count ?? 0;
+    }
+
+    private void OpenAuction()
+    {
+        if (auctionOverview != null)
+        {
+            Navigation.NavigateTo($"/auction/{auctionOverview.AuctionId}");
+        }
+    }
+
+    private async Task StartAuction()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        var result = await AuctionCommands.StartAuctionAsync(LeagueId);
+        isProcessing = false;
+        await LoadData();
+    }
+
+    private async Task PauseAuction()
+    {
+        if (auctionOverview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.PauseAuctionAsync(LeagueId);
+        isProcessing = false;
+        await LoadData();
+    }
+
+    private async Task ResumeAuction()
+    {
+        if (auctionOverview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.ResumeAuctionAsync(LeagueId);
+        isProcessing = false;
+        await LoadData();
+    }
+
+    private async Task CompleteAuction()
+    {
+        if (auctionOverview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.CompleteAuctionAsync(LeagueId);
+        isProcessing = false;
+        await LoadData();
+    }
+}

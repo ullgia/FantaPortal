@@ -16,7 +16,7 @@ public class BudgetConstraintsEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 3; i++)
         {
@@ -60,7 +60,7 @@ public class BudgetConstraintsEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 3; i++)
         {
@@ -99,7 +99,7 @@ public class BudgetConstraintsEdgeCaseTest
         Assert.True(eligibleTeams.Count >= 2, $"Expected at least 2 eligible teams, got {eligibleTeams.Count}");
     }
 
-    private void CompleteReadyCheck(League league, List<Team> teams)
+    private void CompleteReadyCheck(League league, List<LeaguePlayer> teams)
     {
         var auction = league.ActiveAuction!;
         var readyState = auction.CurrentReadyState!;

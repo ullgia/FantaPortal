@@ -17,9 +17,9 @@ public class SimpleAutoAssignmentTest
         var leagueId = Guid.NewGuid();
         
         // Crea i team con IDs automatici
-        var nominatorTeam = Team.CreateInternal(leagueId, "Nominator Team", 5000);
-        var team1 = Team.CreateInternal(leagueId, "Team 1", 5000);
-        var team2 = Team.CreateInternal(leagueId, "Team 2", 5000);
+        var nominatorTeam = LeaguePlayer.CreateInternal(leagueId, "Nominator Team", 5000);
+        var team1 = LeaguePlayer.CreateInternal(leagueId, "Team 1", 5000);
+        var team2 = LeaguePlayer.CreateInternal(leagueId, "Team 2", 5000);
         
         // Verifica che i team hanno gli ID corretti
         Console.WriteLine($"Created Nominator Team ID: {nominatorTeam.Id}");

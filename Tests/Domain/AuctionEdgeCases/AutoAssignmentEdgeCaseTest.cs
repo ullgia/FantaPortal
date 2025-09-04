@@ -16,7 +16,7 @@ public class AutoAssignmentEdgeCaseTest
     {
         // Arrange
         var league = League.Create("Test League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -46,7 +46,7 @@ public class AutoAssignmentEdgeCaseTest
         Assert.Equal(499, teams[0].Budget); // 500-1=499 (auto-assign price)
     }
 
-    private void CompleteReadyCheck(League league, List<Team> teams)
+    private void CompleteReadyCheck(League league, List<LeaguePlayer> teams)
     {
         var auction = league.ActiveAuction!;
         var readyState = auction.CurrentReadyState!;
@@ -61,7 +61,7 @@ public class AutoAssignmentEdgeCaseTest
         }
     }
 
-    private void FillGoalkeepers(Team team, int count)
+    private void FillGoalkeepers(LeaguePlayer team, int count)
     {
         for (int i = 0; i < count; i++)
         {

@@ -18,7 +18,7 @@ public class ScalabilityEdgeCaseTest
         var league = League.Create("Small League");
         var teamA = league.AddTeam("Team A", 500);
         var teamB = league.AddTeam("Team B", 500);
-        var teams = new List<Team> { teamA, teamB };
+        var teams = new List<LeaguePlayer> { teamA, teamB };
         
         var goalkeeper = SerieAPlayer.Create(1, "P", "P", "GK_Test", "Team_X", 5.5m, 5.0m, 55);
         
@@ -45,7 +45,7 @@ public class ScalabilityEdgeCaseTest
     {
         // Arrange - Lega con 6 team
         var league = League.Create("Big League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
         for (int i = 1; i <= 6; i++)
         {
             teams.Add(league.AddTeam($"Team {i}", 500));
@@ -81,7 +81,7 @@ public class ScalabilityEdgeCaseTest
     {
         // Arrange - Lega con 8 team
         var league = League.Create("Large League");
-        var teams = new List<Team>();
+        var teams = new List<LeaguePlayer>();
         for (int i = 1; i <= 8; i++)
         {
             teams.Add(league.AddTeam($"Team {i}", 500));
@@ -112,7 +112,7 @@ public class ScalabilityEdgeCaseTest
         }
     }
 
-    private void CompleteReadyCheck(League league, List<Team> teams)
+    private void CompleteReadyCheck(League league, List<LeaguePlayer> teams)
     {
         var auction = league.ActiveAuction!;
         var readyState = auction.CurrentReadyState!;

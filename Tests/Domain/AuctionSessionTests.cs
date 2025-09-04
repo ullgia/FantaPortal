@@ -11,11 +11,11 @@ namespace Tests.Domain;
 
 public class AuctionSessionTests
 {
-    private static Team CreateTeamWithSlots(string name, PlayerType role, int availableSlots)
+    private static LeaguePlayer CreateTeamWithSlots(string name, PlayerType role, int availableSlots)
     {
         // Crea un team con slot disponibili specifici per il test
         var leagueId = Guid.NewGuid();
-        var team = Team.CreateInternal(leagueId, name, 5000);
+        var team = LeaguePlayer.CreateInternal(leagueId, name, 5000);
         
         // Simula l'uso di slot assegnando giocatori usando l'API pubblica
         var maxSlots = role switch
@@ -70,7 +70,7 @@ public class AuctionSessionTests
         var nominatorTeam = CreateTeamWithSlots("Nominator", PlayerType.Goalkeeper, 1); // Ha slot
         var otherTeam = CreateTeamWithSlots("Other", PlayerType.Goalkeeper, 0);      // Non ha slot
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { nominatorTeam.Id, nominatorTeam },
             { otherTeam.Id, otherTeam }
@@ -101,7 +101,7 @@ public class AuctionSessionTests
         var team2 = CreateTeamWithSlots("Team2", PlayerType.Defender, 1);
         var team3 = CreateTeamWithSlots("Team3", PlayerType.Defender, 0); // Non ha slot
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { nominatorTeam.Id, nominatorTeam },
             { team2.Id, team2 },
@@ -264,7 +264,7 @@ public class AuctionSessionTests
         var team1 = CreateTeamWithSlots("Team1", PlayerType.Goalkeeper, 1);
         var team2 = CreateTeamWithSlots("Team2", PlayerType.Goalkeeper, 1);
         
-        var teams = new Dictionary<Guid, Team>
+        var teams = new Dictionary<Guid, LeaguePlayer>
         {
             { team1.Id, team1 },
             { team2.Id, team2 }

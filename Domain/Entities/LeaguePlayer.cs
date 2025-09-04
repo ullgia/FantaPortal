@@ -5,7 +5,7 @@ using Domain.Enums;
 using Domain.Exceptions;
 using Domain.ValueObjects;
 
-public class Team : BaseEntity
+public class LeaguePlayer : BaseEntity
 {
     public Guid LeagueId { get; private set; }
     public string Name { get; private set; } = string.Empty;
@@ -23,11 +23,11 @@ public class Team : BaseEntity
     public int CountC { get; private set; }
     public int CountA { get; private set; }
 
-    private Team() { }
+    private LeaguePlayer() { }
 
-    internal static Team CreateInternal(Guid leagueId, string name, int initialBudget)
+    internal static LeaguePlayer CreateInternal(Guid leagueId, string name, int initialBudget)
     {
-        return new Team { LeagueId = leagueId, Name = name, Budget = initialBudget };
+        return new LeaguePlayer { LeagueId = leagueId, Name = name, Budget = initialBudget };
     }
 
     #region Slot Management

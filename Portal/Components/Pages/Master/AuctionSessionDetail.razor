@@ -1,0 +1,118 @@
+@page "/master/auctions/{auctionId:guid}"
+@attribute [Authorize(Roles = "Master")]
+@using Application.Services
+@inject IAuctionQueries AuctionQueries
+@inject IAuctionCommands AuctionCommands
+@using Domain.Enums
+@inject NavigationManager Navigation
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Dettaglio Asta</PageTitle>
+
+<RadzenStack Gap="1rem" Class="rz-p-3">
+    <RadzenButton Icon="arrow_back" Text="Indietro" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/master/leagues"))" />
+    @if (overview == null)
+    {
+        <RadzenProgressBarCircular ShowValue="false" />
+    }
+    else
+    {
+        <RadzenCard>
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.H4">Asta @overview.LeagueName</RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@overview.Status.ToString()" />
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"Turno {overview.CurrentTurnPosition}/{overview.TotalTeams}")" />
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"Ruolo {overview.CurrentRole}")" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenRow>
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6">Ordine Turni</RadzenText>
+                    <RadzenDataList TItem="TurnOrderDto" Data="@overview.TurnOrder" Style="max-height:400px;overflow:auto;">
+                        <Template Context="turn">
+                            <div style="padding:0.25rem;@(turn.IsCurrentTurn ? "background:#e3f2fd;border-left:4px solid #1976d2;" : "")">@turn.Position. @turn.TeamName</div>
+                        </Template>
+                    </RadzenDataList>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="8">
+                <RadzenCard>
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.H6">Controlli</RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Apri Vista" Icon="open_in_new" Click="OpenAuctionPlayerView" />
+                            @if (overview.Status == AuctionStatus.Running)
+                            {
+                                <RadzenButton Text="Pausa" Icon="pause" ButtonStyle="ButtonStyle.Warning" Click="PauseAuction" Disabled="isProcessing" />
+                            }
+                            else if (overview.Status == AuctionStatus.Paused)
+                            {
+                                <RadzenButton Text="Riprendi" Icon="play_arrow" ButtonStyle="ButtonStyle.Info" Click="ResumeAuction" Disabled="isProcessing" />
+                            }
+                            @if (overview.Status == AuctionStatus.Running || overview.Status == AuctionStatus.Paused)
+                            {
+                                <RadzenButton Text="Completa" Icon="stop" ButtonStyle="ButtonStyle.Danger" Click="CompleteAuction" Disabled="isProcessing" />
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid AuctionId { get; set; }
+    // Se serve LeagueId lo si può derivare dalla overview quando caricata
+
+    private AuctionOverviewDto? overview;
+    private bool isProcessing;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+    }
+
+    private void OpenAuctionPlayerView()
+    {
+        if (overview != null)
+        {
+            Navigation.NavigateTo($"/auction/{overview.AuctionId}");
+        }
+    }
+
+    private async Task PauseAuction()
+    {
+        if (overview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.PauseAuctionAsync(overview.AuctionId);
+        isProcessing = false;
+        overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+        StateHasChanged();
+    }
+
+    private async Task ResumeAuction()
+    {
+        if (overview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.ResumeAuctionAsync(overview.AuctionId);
+        isProcessing = false;
+        overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+        StateHasChanged();
+    }
+
+    private async Task CompleteAuction()
+    {
+        if (overview == null || isProcessing) return;
+        isProcessing = true;
+        await AuctionCommands.CompleteAuctionAsync(overview.AuctionId);
+        isProcessing = false;
+        overview = await AuctionQueries.GetAuctionOverviewAsync(AuctionId);
+        StateHasChanged();
+    }
+}

@@ -7,9 +7,8 @@ namespace Infrastructure.Peristance
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
-    public DbSet<Player> Players => Set<Player>();
         public DbSet<League> Leagues => Set<League>();
-        public DbSet<Team> Teams => Set<Team>();
+        public DbSet<LeaguePlayer> LeaguePlayers => Set<LeaguePlayer>();
         public DbSet<AuctionSession> AuctionSessions => Set<AuctionSession>();
         public DbSet<AuctionSessionTurnOrder> AuctionSessionTurnOrders => Set<AuctionSessionTurnOrder>();
         public DbSet<BiddingReadyState> BiddingReadyStates => Set<BiddingReadyState>();

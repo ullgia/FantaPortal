@@ -23,6 +23,8 @@ namespace Infrastructure
             // Auction services
             services.AddScoped<Application.Services.IAuctionCommands, Infrastructure.Services.AuctionCommands>();
             services.AddScoped<Application.Services.IAuctionQueries, Infrastructure.Services.AuctionQueries>();
+            services.AddScoped<Application.Services.ILeagueQueries, Infrastructure.Services.LeagueQueries>();
+            services.AddScoped<Application.Services.ILeagueCommands, Infrastructure.Services.LeagueCommands>();
             
             // Timer data service
             services.AddScoped<Application.Services.IAuctionTimerDataService, Infrastructure.Services.AuctionTimerDataService>();

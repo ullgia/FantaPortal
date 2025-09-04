@@ -10,6 +10,6 @@ public class BidConfiguration : IEntityTypeConfiguration<Bid>
     {
         b.HasKey(bd => bd.Id);
         b.HasOne<AuctionTurn>().WithMany().HasForeignKey(bd => bd.TurnId);
-        b.HasOne<Team>().WithMany().HasForeignKey(bd => bd.TeamId);
+        b.HasOne<LeaguePlayer>().WithMany().HasForeignKey(bd => bd.TeamId);
     }
 }
